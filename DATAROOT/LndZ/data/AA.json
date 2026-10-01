@@ -1,0 +1,2398 @@
+{
+  "warning": "Modifications done in the SPX will overwrite this file.",
+  "copyright": "(c) 2020- SPX Graphics (https://spxgraphics.com)",
+  "updated": "2026-09-18T18:51:09.677Z",
+  "templates": [
+    {
+      "description": "Airport split-flap schedule · 10 matches",
+      "playserver": "OVERLAY",
+      "playchannel": "1",
+      "playlayer": "5",
+      "webplayout": "5",
+      "steps": "1",
+      "out": "manual",
+      "uicolor": "1",
+      "dataformat": "json",
+      "DataFields": [
+        {
+          "ftype": "instruction",
+          "value": "Op til 10 kampe. Ændr status/score og tryk UPDATE — tavlen flipper live. Tomt hjemmehold skjuler rækken. Tid: 16:00 eller 1-0."
+        },
+        {
+          "field": "f0",
+          "ftype": "textfield",
+          "title": "Board title",
+          "value": "DEPARTURES"
+        },
+        {
+          "field": "h1",
+          "ftype": "dropdown",
+          "title": "Kamp 1 · hjemmehold",
+          "value": "metizport",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "a1",
+          "ftype": "dropdown",
+          "title": "Kamp 1 · udehold",
+          "value": "acend",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "t1",
+          "ftype": "textfield",
+          "title": "Kamp 1 · tid (HH:MM) eller score",
+          "value": "16:00"
+        },
+        {
+          "field": "s1",
+          "ftype": "dropdown",
+          "title": "Kamp 1 · status",
+          "value": "Boarding",
+          "items": [
+            {
+              "text": "Boarding",
+              "value": "Boarding"
+            },
+            {
+              "text": "Live",
+              "value": "Live"
+            },
+            {
+              "text": "Delayed",
+              "value": "Delayed"
+            },
+            {
+              "text": "Departed",
+              "value": "Departed"
+            }
+          ]
+        },
+        {
+          "field": "h2",
+          "ftype": "dropdown",
+          "title": "Kamp 2 · hjemmehold",
+          "value": "youngninjas",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "a2",
+          "ftype": "dropdown",
+          "title": "Kamp 2 · udehold",
+          "value": "phantom",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "t2",
+          "ftype": "textfield",
+          "title": "Kamp 2 · tid (HH:MM) eller score",
+          "value": "16:45"
+        },
+        {
+          "field": "s2",
+          "ftype": "dropdown",
+          "title": "Kamp 2 · status",
+          "value": "Boarding",
+          "items": [
+            {
+              "text": "Boarding",
+              "value": "Boarding"
+            },
+            {
+              "text": "Live",
+              "value": "Live"
+            },
+            {
+              "text": "Delayed",
+              "value": "Delayed"
+            },
+            {
+              "text": "Departed",
+              "value": "Departed"
+            }
+          ]
+        },
+        {
+          "field": "h3",
+          "ftype": "dropdown",
+          "title": "Kamp 3 · hjemmehold",
+          "value": "aab",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "a3",
+          "ftype": "dropdown",
+          "title": "Kamp 3 · udehold",
+          "value": "lilmix",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "t3",
+          "ftype": "textfield",
+          "title": "Kamp 3 · tid (HH:MM) eller score",
+          "value": "17:30"
+        },
+        {
+          "field": "s3",
+          "ftype": "dropdown",
+          "title": "Kamp 3 · status",
+          "value": "Boarding",
+          "items": [
+            {
+              "text": "Boarding",
+              "value": "Boarding"
+            },
+            {
+              "text": "Live",
+              "value": "Live"
+            },
+            {
+              "text": "Delayed",
+              "value": "Delayed"
+            },
+            {
+              "text": "Departed",
+              "value": "Departed"
+            }
+          ]
+        },
+        {
+          "field": "h4",
+          "ftype": "dropdown",
+          "title": "Kamp 4 · hjemmehold",
+          "value": "rethink",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "a4",
+          "ftype": "dropdown",
+          "title": "Kamp 4 · udehold",
+          "value": "fingerscrossed",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "t4",
+          "ftype": "textfield",
+          "title": "Kamp 4 · tid (HH:MM) eller score",
+          "value": "18:15"
+        },
+        {
+          "field": "s4",
+          "ftype": "dropdown",
+          "title": "Kamp 4 · status",
+          "value": "Delayed",
+          "items": [
+            {
+              "text": "Boarding",
+              "value": "Boarding"
+            },
+            {
+              "text": "Live",
+              "value": "Live"
+            },
+            {
+              "text": "Delayed",
+              "value": "Delayed"
+            },
+            {
+              "text": "Departed",
+              "value": "Departed"
+            }
+          ]
+        },
+        {
+          "field": "h5",
+          "ftype": "dropdown",
+          "title": "Kamp 5 · hjemmehold",
+          "value": "metizport",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "a5",
+          "ftype": "dropdown",
+          "title": "Kamp 5 · udehold",
+          "value": "youngninjas",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "t5",
+          "ftype": "textfield",
+          "title": "Kamp 5 · tid (HH:MM) eller score",
+          "value": "19:00"
+        },
+        {
+          "field": "s5",
+          "ftype": "dropdown",
+          "title": "Kamp 5 · status",
+          "value": "Boarding",
+          "items": [
+            {
+              "text": "Boarding",
+              "value": "Boarding"
+            },
+            {
+              "text": "Live",
+              "value": "Live"
+            },
+            {
+              "text": "Delayed",
+              "value": "Delayed"
+            },
+            {
+              "text": "Departed",
+              "value": "Departed"
+            }
+          ]
+        },
+        {
+          "field": "h6",
+          "ftype": "dropdown",
+          "title": "Kamp 6 · hjemmehold",
+          "value": "",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "a6",
+          "ftype": "dropdown",
+          "title": "Kamp 6 · udehold",
+          "value": "",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "t6",
+          "ftype": "textfield",
+          "title": "Kamp 6 · tid (HH:MM) eller score",
+          "value": ""
+        },
+        {
+          "field": "s6",
+          "ftype": "dropdown",
+          "title": "Kamp 6 · status",
+          "value": "Boarding",
+          "items": [
+            {
+              "text": "Boarding",
+              "value": "Boarding"
+            },
+            {
+              "text": "Live",
+              "value": "Live"
+            },
+            {
+              "text": "Delayed",
+              "value": "Delayed"
+            },
+            {
+              "text": "Departed",
+              "value": "Departed"
+            }
+          ]
+        },
+        {
+          "field": "h7",
+          "ftype": "dropdown",
+          "title": "Kamp 7 · hjemmehold",
+          "value": "",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "a7",
+          "ftype": "dropdown",
+          "title": "Kamp 7 · udehold",
+          "value": "",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "t7",
+          "ftype": "textfield",
+          "title": "Kamp 7 · tid (HH:MM) eller score",
+          "value": ""
+        },
+        {
+          "field": "s7",
+          "ftype": "dropdown",
+          "title": "Kamp 7 · status",
+          "value": "Boarding",
+          "items": [
+            {
+              "text": "Boarding",
+              "value": "Boarding"
+            },
+            {
+              "text": "Live",
+              "value": "Live"
+            },
+            {
+              "text": "Delayed",
+              "value": "Delayed"
+            },
+            {
+              "text": "Departed",
+              "value": "Departed"
+            }
+          ]
+        },
+        {
+          "field": "h8",
+          "ftype": "dropdown",
+          "title": "Kamp 8 · hjemmehold",
+          "value": "",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "a8",
+          "ftype": "dropdown",
+          "title": "Kamp 8 · udehold",
+          "value": "",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "t8",
+          "ftype": "textfield",
+          "title": "Kamp 8 · tid (HH:MM) eller score",
+          "value": ""
+        },
+        {
+          "field": "s8",
+          "ftype": "dropdown",
+          "title": "Kamp 8 · status",
+          "value": "Boarding",
+          "items": [
+            {
+              "text": "Boarding",
+              "value": "Boarding"
+            },
+            {
+              "text": "Live",
+              "value": "Live"
+            },
+            {
+              "text": "Delayed",
+              "value": "Delayed"
+            },
+            {
+              "text": "Departed",
+              "value": "Departed"
+            }
+          ]
+        },
+        {
+          "field": "h9",
+          "ftype": "dropdown",
+          "title": "Kamp 9 · hjemmehold",
+          "value": "",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "a9",
+          "ftype": "dropdown",
+          "title": "Kamp 9 · udehold",
+          "value": "",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "t9",
+          "ftype": "textfield",
+          "title": "Kamp 9 · tid (HH:MM) eller score",
+          "value": ""
+        },
+        {
+          "field": "s9",
+          "ftype": "dropdown",
+          "title": "Kamp 9 · status",
+          "value": "Boarding",
+          "items": [
+            {
+              "text": "Boarding",
+              "value": "Boarding"
+            },
+            {
+              "text": "Live",
+              "value": "Live"
+            },
+            {
+              "text": "Delayed",
+              "value": "Delayed"
+            },
+            {
+              "text": "Departed",
+              "value": "Departed"
+            }
+          ]
+        },
+        {
+          "field": "h10",
+          "ftype": "dropdown",
+          "title": "Kamp 10 · hjemmehold",
+          "value": "",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "a10",
+          "ftype": "dropdown",
+          "title": "Kamp 10 · udehold",
+          "value": "",
+          "items": [
+            {
+              "text": "— tom række —",
+              "value": ""
+            },
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            },
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "t10",
+          "ftype": "textfield",
+          "title": "Kamp 10 · tid (HH:MM) eller score",
+          "value": ""
+        },
+        {
+          "field": "s10",
+          "ftype": "dropdown",
+          "title": "Kamp 10 · status",
+          "value": "Boarding",
+          "items": [
+            {
+              "text": "Boarding",
+              "value": "Boarding"
+            },
+            {
+              "text": "Live",
+              "value": "Live"
+            },
+            {
+              "text": "Delayed",
+              "value": "Delayed"
+            },
+            {
+              "text": "Departed",
+              "value": "Departed"
+            }
+          ]
+        }
+      ],
+      "onair": "false",
+      "imported": "1789753630941",
+      "relpath": "/LandingZone/schedule.html",
+      "itemID": "1789753637463"
+    },
+    {
+      "description": "Lower third · one person · boarding pass",
+      "playserver": "OVERLAY",
+      "playchannel": "1",
+      "playlayer": "5",
+      "webplayout": "5",
+      "steps": "1",
+      "out": "manual",
+      "uicolor": "4",
+      "dataformat": "json",
+      "DataFields": [
+        {
+          "field": "f0",
+          "ftype": "textfield",
+          "title": "Name",
+          "value": "STIAN BERGERUD"
+        },
+        {
+          "field": "f1",
+          "ftype": "textfield",
+          "title": "Title",
+          "value": "THON HOTELS  ·  HOST"
+        },
+        {
+          "field": "f2",
+          "ftype": "dropdown",
+          "title": "Gate stamp",
+          "value": "A12",
+          "items": [
+            {
+              "text": "A12",
+              "value": "A12"
+            },
+            {
+              "text": "A14",
+              "value": "A14"
+            },
+            {
+              "text": "B07",
+              "value": "B07"
+            },
+            {
+              "text": "B09",
+              "value": "B09"
+            },
+            {
+              "text": "C01",
+              "value": "C01"
+            },
+            {
+              "text": "DESK",
+              "value": "DESK"
+            }
+          ]
+        },
+        {
+          "field": "f3",
+          "ftype": "filelist",
+          "title": "Photo PNG (optional)",
+          "assetfolder": "assets/players/",
+          "extension": "png",
+          "value": ""
+        },
+        {
+          "field": "f4",
+          "ftype": "textfield",
+          "title": "Flight meta",
+          "value": "LZ204  ·  OSL"
+        }
+      ],
+      "onair": "false",
+      "imported": "1789753630903",
+      "relpath": "/LandingZone/lt-1.html",
+      "itemID": "1789755191983"
+    },
+    {
+      "description": "Lower third · two persons · boarding passes",
+      "playserver": "OVERLAY",
+      "playchannel": "1",
+      "playlayer": "5",
+      "webplayout": "5",
+      "steps": "1",
+      "out": "manual",
+      "uicolor": "4",
+      "dataformat": "json",
+      "DataFields": [
+        {
+          "field": "a0",
+          "ftype": "textfield",
+          "title": "Person 1 name",
+          "value": "ANDERS"
+        },
+        {
+          "field": "a1",
+          "ftype": "textfield",
+          "title": "Person 1 title",
+          "value": "CASTER"
+        },
+        {
+          "field": "a2",
+          "ftype": "textfield",
+          "title": "Person 1 photo",
+          "value": ""
+        },
+        {
+          "field": "b0",
+          "ftype": "textfield",
+          "title": "Person 2 name",
+          "value": "MARIUS"
+        },
+        {
+          "field": "b1",
+          "ftype": "textfield",
+          "title": "Person 2 title",
+          "value": "CASTER"
+        },
+        {
+          "field": "b2",
+          "ftype": "textfield",
+          "title": "Person 2 photo",
+          "value": ""
+        },
+        {
+          "field": "f2",
+          "ftype": "textfield",
+          "title": "Gate",
+          "value": "DESK"
+        }
+      ],
+      "onair": "false",
+      "imported": "1789753630910",
+      "relpath": "/LandingZone/lt-2.html",
+      "itemID": "1789755531661"
+    },
+    {
+      "description": "Brawl Stars scoreboard · demo (API later)",
+      "playserver": "OVERLAY",
+      "playchannel": "1",
+      "playlayer": "5",
+      "webplayout": "5",
+      "steps": "1",
+      "out": "manual",
+      "uicolor": "5",
+      "dataformat": "json",
+      "DataFields": [
+        {
+          "ftype": "instruction",
+          "value": "Demo overlay. Wire live API later via update(). Scores and timer are SPX fields for now."
+        },
+        {
+          "field": "t1",
+          "ftype": "dropdown",
+          "title": "Team A",
+          "value": "apronred",
+          "items": [
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "t2",
+          "ftype": "dropdown",
+          "title": "Team B",
+          "value": "taxiway",
+          "items": [
+            {
+              "text": "Apron Red (APR)",
+              "value": "apronred"
+            },
+            {
+              "text": "Taxiway (TAX)",
+              "value": "taxiway"
+            }
+          ]
+        },
+        {
+          "field": "s1",
+          "ftype": "dropdown",
+          "title": "Score A",
+          "value": "0",
+          "items": [
+            {
+              "text": "0",
+              "value": "0"
+            },
+            {
+              "text": "1",
+              "value": "1"
+            },
+            {
+              "text": "2",
+              "value": "2"
+            },
+            {
+              "text": "3",
+              "value": "3"
+            }
+          ]
+        },
+        {
+          "field": "s2",
+          "ftype": "dropdown",
+          "title": "Score B",
+          "value": "0",
+          "items": [
+            {
+              "text": "0",
+              "value": "0"
+            },
+            {
+              "text": "1",
+              "value": "1"
+            },
+            {
+              "text": "2",
+              "value": "2"
+            },
+            {
+              "text": "3",
+              "value": "3"
+            }
+          ]
+        },
+        {
+          "field": "mode",
+          "ftype": "dropdown",
+          "title": "Mode",
+          "value": "GEM GRAB",
+          "items": [
+            {
+              "text": "Gem Grab",
+              "value": "GEM GRAB"
+            },
+            {
+              "text": "Brawl Ball",
+              "value": "BRAWL BALL"
+            },
+            {
+              "text": "Showdown",
+              "value": "SHOWDOWN"
+            },
+            {
+              "text": "Hot Zone",
+              "value": "HOT ZONE"
+            },
+            {
+              "text": "Knockout",
+              "value": "KNOCKOUT"
+            },
+            {
+              "text": "Wipeout",
+              "value": "WIPEOUT"
+            }
+          ]
+        },
+        {
+          "field": "map",
+          "ftype": "textfield",
+          "title": "Map",
+          "value": "HARD ROCK MINE"
+        },
+        {
+          "field": "timer",
+          "ftype": "textfield",
+          "title": "Clock",
+          "value": "1:42"
+        },
+        {
+          "field": "best",
+          "ftype": "dropdown",
+          "title": "Series",
+          "value": "BO3",
+          "items": [
+            {
+              "text": "BO1",
+              "value": "BO1"
+            },
+            {
+              "text": "BO3",
+              "value": "BO3"
+            },
+            {
+              "text": "BO5",
+              "value": "BO5"
+            }
+          ]
+        },
+        {
+          "field": "game",
+          "ftype": "dropdown",
+          "title": "Game no.",
+          "value": "1",
+          "items": [
+            {
+              "text": "1",
+              "value": "1"
+            },
+            {
+              "text": "2",
+              "value": "2"
+            },
+            {
+              "text": "3",
+              "value": "3"
+            },
+            {
+              "text": "4",
+              "value": "4"
+            },
+            {
+              "text": "5",
+              "value": "5"
+            }
+          ]
+        }
+      ],
+      "onair": "false",
+      "imported": "1789753630952",
+      "relpath": "/LandingZone/scoreboard-brawl.html",
+      "itemID": "1789755537649"
+    },
+    {
+      "description": "CS2 Map Veto · Best of 3",
+      "playserver": "OVERLAY",
+      "playchannel": "1",
+      "playlayer": "5",
+      "webplayout": "5",
+      "steps": "1",
+      "out": "manual",
+      "uicolor": "3",
+      "dataformat": "json",
+      "DataFields": [
+        {
+          "ftype": "instruction",
+          "value": "Pick teams from the event DB. Logo and name fill in automatically."
+        },
+        {
+          "field": "t1",
+          "ftype": "dropdown",
+          "title": "Team A",
+          "value": "metizport",
+          "items": [
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            }
+          ]
+        },
+        {
+          "field": "t2",
+          "ftype": "dropdown",
+          "title": "Team B",
+          "value": "acend",
+          "items": [
+            {
+              "text": "Metizport (MZP)",
+              "value": "metizport"
+            },
+            {
+              "text": "Acend (ACE)",
+              "value": "acend"
+            },
+            {
+              "text": "Young Ninjas (YN)",
+              "value": "youngninjas"
+            },
+            {
+              "text": "Phantom (PHT)",
+              "value": "phantom"
+            },
+            {
+              "text": "AaB (AAB)",
+              "value": "aab"
+            },
+            {
+              "text": "Lilmix (LMX)",
+              "value": "lilmix"
+            },
+            {
+              "text": "ReThink (RTK)",
+              "value": "rethink"
+            },
+            {
+              "text": "Fingers Crossed (FCX)",
+              "value": "fingerscrossed"
+            }
+          ]
+        },
+        {
+          "ftype": "divider"
+        },
+        {
+          "field": "s1kind",
+          "ftype": "dropdown",
+          "title": "1 · Action",
+          "value": "ban",
+          "items": [
+            {
+              "text": "Ban",
+              "value": "ban"
+            },
+            {
+              "text": "Pick",
+              "value": "pick"
+            },
+            {
+              "text": "Decider",
+              "value": "decider"
+            },
+            {
+              "text": "Open",
+              "value": "open"
+            }
+          ]
+        },
+        {
+          "field": "s1map",
+          "ftype": "dropdown",
+          "title": "1 · Map",
+          "value": "anubis",
+          "items": [
+            {
+              "text": "Dust II",
+              "value": "dust2"
+            },
+            {
+              "text": "Anubis",
+              "value": "anubis"
+            },
+            {
+              "text": "Ancient",
+              "value": "ancient"
+            },
+            {
+              "text": "Mirage",
+              "value": "mirage"
+            },
+            {
+              "text": "Cache",
+              "value": "cache"
+            },
+            {
+              "text": "Nuke",
+              "value": "nuke"
+            },
+            {
+              "text": "Inferno",
+              "value": "inferno"
+            }
+          ]
+        },
+        {
+          "field": "s1team",
+          "ftype": "dropdown",
+          "title": "1 · By",
+          "value": "A",
+          "items": [
+            {
+              "text": "Team A",
+              "value": "A"
+            },
+            {
+              "text": "Team B",
+              "value": "B"
+            },
+            {
+              "text": "—",
+              "value": ""
+            }
+          ]
+        },
+        {
+          "ftype": "divider"
+        },
+        {
+          "field": "s2kind",
+          "ftype": "dropdown",
+          "title": "2 · Action",
+          "value": "ban",
+          "items": [
+            {
+              "text": "Ban",
+              "value": "ban"
+            },
+            {
+              "text": "Pick",
+              "value": "pick"
+            },
+            {
+              "text": "Decider",
+              "value": "decider"
+            },
+            {
+              "text": "Open",
+              "value": "open"
+            }
+          ]
+        },
+        {
+          "field": "s2map",
+          "ftype": "dropdown",
+          "title": "2 · Map",
+          "value": "ancient",
+          "items": [
+            {
+              "text": "Dust II",
+              "value": "dust2"
+            },
+            {
+              "text": "Anubis",
+              "value": "anubis"
+            },
+            {
+              "text": "Ancient",
+              "value": "ancient"
+            },
+            {
+              "text": "Mirage",
+              "value": "mirage"
+            },
+            {
+              "text": "Cache",
+              "value": "cache"
+            },
+            {
+              "text": "Nuke",
+              "value": "nuke"
+            },
+            {
+              "text": "Inferno",
+              "value": "inferno"
+            }
+          ]
+        },
+        {
+          "field": "s2team",
+          "ftype": "dropdown",
+          "title": "2 · By",
+          "value": "B",
+          "items": [
+            {
+              "text": "Team A",
+              "value": "A"
+            },
+            {
+              "text": "Team B",
+              "value": "B"
+            },
+            {
+              "text": "—",
+              "value": ""
+            }
+          ]
+        },
+        {
+          "ftype": "divider"
+        },
+        {
+          "field": "s3kind",
+          "ftype": "dropdown",
+          "title": "3 · Action",
+          "value": "pick",
+          "items": [
+            {
+              "text": "Ban",
+              "value": "ban"
+            },
+            {
+              "text": "Pick",
+              "value": "pick"
+            },
+            {
+              "text": "Decider",
+              "value": "decider"
+            },
+            {
+              "text": "Open",
+              "value": "open"
+            }
+          ]
+        },
+        {
+          "field": "s3map",
+          "ftype": "dropdown",
+          "title": "3 · Map",
+          "value": "nuke",
+          "items": [
+            {
+              "text": "Dust II",
+              "value": "dust2"
+            },
+            {
+              "text": "Anubis",
+              "value": "anubis"
+            },
+            {
+              "text": "Ancient",
+              "value": "ancient"
+            },
+            {
+              "text": "Mirage",
+              "value": "mirage"
+            },
+            {
+              "text": "Cache",
+              "value": "cache"
+            },
+            {
+              "text": "Nuke",
+              "value": "nuke"
+            },
+            {
+              "text": "Inferno",
+              "value": "inferno"
+            }
+          ]
+        },
+        {
+          "field": "s3team",
+          "ftype": "dropdown",
+          "title": "3 · By",
+          "value": "A",
+          "items": [
+            {
+              "text": "Team A",
+              "value": "A"
+            },
+            {
+              "text": "Team B",
+              "value": "B"
+            },
+            {
+              "text": "—",
+              "value": ""
+            }
+          ]
+        },
+        {
+          "ftype": "divider"
+        },
+        {
+          "field": "s4kind",
+          "ftype": "dropdown",
+          "title": "4 · Action",
+          "value": "pick",
+          "items": [
+            {
+              "text": "Ban",
+              "value": "ban"
+            },
+            {
+              "text": "Pick",
+              "value": "pick"
+            },
+            {
+              "text": "Decider",
+              "value": "decider"
+            },
+            {
+              "text": "Open",
+              "value": "open"
+            }
+          ]
+        },
+        {
+          "field": "s4map",
+          "ftype": "dropdown",
+          "title": "4 · Map",
+          "value": "cache",
+          "items": [
+            {
+              "text": "Dust II",
+              "value": "dust2"
+            },
+            {
+              "text": "Anubis",
+              "value": "anubis"
+            },
+            {
+              "text": "Ancient",
+              "value": "ancient"
+            },
+            {
+              "text": "Mirage",
+              "value": "mirage"
+            },
+            {
+              "text": "Cache",
+              "value": "cache"
+            },
+            {
+              "text": "Nuke",
+              "value": "nuke"
+            },
+            {
+              "text": "Inferno",
+              "value": "inferno"
+            }
+          ]
+        },
+        {
+          "field": "s4team",
+          "ftype": "dropdown",
+          "title": "4 · By",
+          "value": "B",
+          "items": [
+            {
+              "text": "Team A",
+              "value": "A"
+            },
+            {
+              "text": "Team B",
+              "value": "B"
+            },
+            {
+              "text": "—",
+              "value": ""
+            }
+          ]
+        },
+        {
+          "ftype": "divider"
+        },
+        {
+          "field": "s5kind",
+          "ftype": "dropdown",
+          "title": "5 · Action",
+          "value": "ban",
+          "items": [
+            {
+              "text": "Ban",
+              "value": "ban"
+            },
+            {
+              "text": "Pick",
+              "value": "pick"
+            },
+            {
+              "text": "Decider",
+              "value": "decider"
+            },
+            {
+              "text": "Open",
+              "value": "open"
+            }
+          ]
+        },
+        {
+          "field": "s5map",
+          "ftype": "dropdown",
+          "title": "5 · Map",
+          "value": "mirage",
+          "items": [
+            {
+              "text": "Dust II",
+              "value": "dust2"
+            },
+            {
+              "text": "Anubis",
+              "value": "anubis"
+            },
+            {
+              "text": "Ancient",
+              "value": "ancient"
+            },
+            {
+              "text": "Mirage",
+              "value": "mirage"
+            },
+            {
+              "text": "Cache",
+              "value": "cache"
+            },
+            {
+              "text": "Nuke",
+              "value": "nuke"
+            },
+            {
+              "text": "Inferno",
+              "value": "inferno"
+            }
+          ]
+        },
+        {
+          "field": "s5team",
+          "ftype": "dropdown",
+          "title": "5 · By",
+          "value": "A",
+          "items": [
+            {
+              "text": "Team A",
+              "value": "A"
+            },
+            {
+              "text": "Team B",
+              "value": "B"
+            },
+            {
+              "text": "—",
+              "value": ""
+            }
+          ]
+        },
+        {
+          "ftype": "divider"
+        },
+        {
+          "field": "s6kind",
+          "ftype": "dropdown",
+          "title": "6 · Action",
+          "value": "ban",
+          "items": [
+            {
+              "text": "Ban",
+              "value": "ban"
+            },
+            {
+              "text": "Pick",
+              "value": "pick"
+            },
+            {
+              "text": "Decider",
+              "value": "decider"
+            },
+            {
+              "text": "Open",
+              "value": "open"
+            }
+          ]
+        },
+        {
+          "field": "s6map",
+          "ftype": "dropdown",
+          "title": "6 · Map",
+          "value": "inferno",
+          "items": [
+            {
+              "text": "Dust II",
+              "value": "dust2"
+            },
+            {
+              "text": "Anubis",
+              "value": "anubis"
+            },
+            {
+              "text": "Ancient",
+              "value": "ancient"
+            },
+            {
+              "text": "Mirage",
+              "value": "mirage"
+            },
+            {
+              "text": "Cache",
+              "value": "cache"
+            },
+            {
+              "text": "Nuke",
+              "value": "nuke"
+            },
+            {
+              "text": "Inferno",
+              "value": "inferno"
+            }
+          ]
+        },
+        {
+          "field": "s6team",
+          "ftype": "dropdown",
+          "title": "6 · By",
+          "value": "B",
+          "items": [
+            {
+              "text": "Team A",
+              "value": "A"
+            },
+            {
+              "text": "Team B",
+              "value": "B"
+            },
+            {
+              "text": "—",
+              "value": ""
+            }
+          ]
+        },
+        {
+          "ftype": "divider"
+        },
+        {
+          "field": "s7kind",
+          "ftype": "dropdown",
+          "title": "7 · Action",
+          "value": "decider",
+          "items": [
+            {
+              "text": "Ban",
+              "value": "ban"
+            },
+            {
+              "text": "Pick",
+              "value": "pick"
+            },
+            {
+              "text": "Decider",
+              "value": "decider"
+            },
+            {
+              "text": "Open",
+              "value": "open"
+            }
+          ]
+        },
+        {
+          "field": "s7map",
+          "ftype": "dropdown",
+          "title": "7 · Map",
+          "value": "dust2",
+          "items": [
+            {
+              "text": "Dust II",
+              "value": "dust2"
+            },
+            {
+              "text": "Anubis",
+              "value": "anubis"
+            },
+            {
+              "text": "Ancient",
+              "value": "ancient"
+            },
+            {
+              "text": "Mirage",
+              "value": "mirage"
+            },
+            {
+              "text": "Cache",
+              "value": "cache"
+            },
+            {
+              "text": "Nuke",
+              "value": "nuke"
+            },
+            {
+              "text": "Inferno",
+              "value": "inferno"
+            }
+          ]
+        },
+        {
+          "field": "s7team",
+          "ftype": "dropdown",
+          "title": "7 · By",
+          "value": "",
+          "items": [
+            {
+              "text": "Team A",
+              "value": "A"
+            },
+            {
+              "text": "Team B",
+              "value": "B"
+            },
+            {
+              "text": "—",
+              "value": ""
+            }
+          ]
+        }
+      ],
+      "onair": "false",
+      "imported": "1789753630986",
+      "relpath": "/LandingZone/veto-bo3.html",
+      "itemID": "1789755541933"
+    }
+  ],
+  "projectFormat": "SPX",
+  "project": "LndZ",
+  "rundown": "AA",
+  "dividers": [
+    {
+      "id": "1789755187982",
+      "title": "---",
+      "position": 1
+    },
+    {
+      "id": "1789755545336",
+      "title": "Divider",
+      "position": 3
+    }
+  ]
+}

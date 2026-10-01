@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+
+<!-- DO NOT MODIFY THIS FILE -->
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
+    <!--      SPX GRAPHICS CONTROLLER      -->
+    <!--     ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨    -->
+    <!--      (c) 2020- SPX Graphics       -->
+    <!--        http://spxgraphics.com        -->
+    <!--                                   -->
+    <!-- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
+    
+    <!--
+      Scripts, no frameworks.
+      "Some extract of vanilla, enough to feed Godzilla."
+    -->
+
+    <script src="./js/socket.io.js"></script>
+    <script src="/js/lib/dotlottie-player.js"></script>
+    <script src="/js/spx_rendererUtils.js" type="module"></script> <!-- added in 1.3.3 RC-->
+    <script src="/js/ograf_functions.js"></script>
+    <script src="/js/spx_gc.js"></script>
+    <title>SPX Renderer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            overflow: hidden;
+            margin: 0;
+            padding: 0px;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0px;
+            background-color: transparent;
+            background-color: rgba(0,0,0,0);
+            color: black;
+            font-size: 3em;
+        }
+
+        #root {
+            padding: 0px;
+            /* MAIN RENDERER size set by SPX to {{width}}x{{height}} */ 
+            width: {{width}};
+            height: {{height}};
+            position: relative;
+            border: 0px dashed red;
+            background-size: 100% 100%;
+            background-color: rgba(0,0,0,0);
+        }
+        
+        #overlays {
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 200;
+            position: absolute;
+            border: 0px solid red;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .frame {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            padding: 0px;
+            position: absolute;
+            border: 0px solid red;
+        }
+
+        .ografRenderTarget > iframe,
+        .ografRenderTarget {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            padding: 0px;
+            overflow: hidden;
+            position: absolute;
+            border: 0px dashed green;
+        }
+
+        .debugMessage{
+            top: 5%;
+            left: 10%;
+            opacity: 0.0;
+            z-index: 500;
+            font-size: 2em;
+            font-weight: bold;
+            position: absolute;
+            padding: 0.1em 0.5em;
+            display: inline-block;
+            color: rgb(3, 42, 3);
+            transform: rotate(1deg);
+            border: 1px solid green;
+            background-color: rgba(205, 255, 218, 0.85);
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        #cursorHider {
+            z-index: 200;
+            background-color: rgba(0,0,0,0.0);
+            cursor: none;
+        }
+
+        #wm {
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 200;
+            position: absolute;
+            border: 0px dashed red;
+            background-color: rgba(0,0,0,0);
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+
+    </style>
+
+    <script>
+        // Renderer info to console
+        console.log('RENDERER: ' + navigator?.userAgent);
+
+        // Renderer info to console
+        console.log('RENDERER: ' + navigator?.userAgent);
+
+        let incomingData; // a placeholder for templateData
+        let WMtimer = null;
+        let startTime = new Date().getTime();
+        
+        function setTarget(LayerNro, projectFormat) {
+            if (projectFormat === "OGRAF") {
+                return 'div' + LayerNro;
+            } else {
+                return 'layer' + LayerNro;
+            }
+        }
+
+        function allowLayerControl(LayerNro) {
+            let playMode = incomingData.playmode || 'notFoundSoMustBeProgramCommand' ;
+            if ( isPreviewMode() && playMode != 'preview') {
+                return false;
+            }
+
+            if ( !isPreviewMode() && playMode == 'preview') {
+                return false;
+            }
+
+            const queryString   = window.location.search;
+            const urlParams     = new URLSearchParams(queryString);
+            const limitLayers   = urlParams.get('layers');
+            LayerNro = Math.min(parseInt(LayerNro), 5); 
+            if (limitLayers) {
+                let allowedLayers = JSON.parse(limitLayers);
+                if ( allowedLayers.includes(LayerNro) ) {
+                    return true;
+                } else {
+                    console.log('Layer ' + LayerNro + ' blocked, allows ', allowedLayers);
+                    return false;
+                }
+            } else {
+                return true
+            }
+        }
+
+        function validateLayerNro(LayerNro) {
+            if (!allowLayerControl(LayerNro)) { return false }
+
+            if ( isPreviewMode() ) {
+                return 1
+            } else {
+                // console.log('Validating LayerNro ' + LayerNro); // debug
+                return Math.min(parseInt(LayerNro),5);
+            }
+        }
+
+        function isPreviewMode() {
+            const url = new URL(window.location.href);
+            let previewFlag = url.searchParams.get('preview') || '';
+            let previewPage = url.pathname || '';
+            if ( previewFlag == 'true' || previewPage.includes('preview') ) {
+                return true
+            } else {
+                return false
+            }
+        }
+
+        function isLocalRenderer() {
+            if (this.name == 'LOCAL') {
+                return true
+            } else {
+                return false
+            }
+        }
+
+        function clearLayer(LayerNro){
+            let ValidatedLayerNro = validateLayerNro(LayerNro);
+
+            // v1.1.4 allow clearing of all layers (even restricted ones)
+            if (!ValidatedLayerNro) {
+                ValidatedLayerNro = LayerNro
+            }
+            populateLayer(ValidatedLayerNro,'',true); // clear layer forcefully
+        }
+
+        function echo(msg) {
+            document.getElementById('debugMessage').innerText=msg;
+        }
+        
+        function spxWM(mode=0,ref=0, minMins=15, maxMins=30) {
+            clearTimeout(WMtimer);
+            WMtimer = null;
+            let MODES = ['init','wait', 'play','stop', 'force'];
+            const player = document.getElementById('wm');
+            let file = '/img/json/wm-' + ref + '.json';
+            let fadeOutAfter = 8000; // Anim duration
+
+            switch (MODES[mode]) {
+                case 'init':
+                    console.log('0: spxWM init');
+                    player.style.opacity=0;
+                    player.load(file);
+                    spxWM(1,ref, minMins, maxMins);
+                    return;
+                    break;
+
+                case 'wait':
+                    // DEBUG #######
+                    // minMins = 0.2
+                    // maxMins = 0.5
+                    // #############
+                    let minMS = (parseFloat(minMins) * 60 * 1000); // default 15 min
+                    let maxMS = (parseFloat(maxMins) * 60 * 1000); // default 30 min
+                    minMS = Math.max(minMS, fadeOutAfter+500)
+                    let rnd = Math.floor(Math.random() * maxMS) + minMS;
+                    console.log('1: spxWM delay sec', (rnd/1000));
+                    WMtimer = setTimeout(function () {
+                        spxWM(2,ref, minMins, maxMins);
+                    }, rnd);
+                    return;
+                    break;
+
+                case 'play':
+                    console.log('2: spxWM play');
+                    player.style.opacity=1;
+                    player.seek(0);
+                    player.play();
+                    spxWM(1,ref, minMins, maxMins);
+                    setTimeout(function () {
+                        player.style.opacity=0;
+                    }, fadeOutAfter);
+                    break;
+
+                case 'stop':
+                    console.log('3: spxWM stop');
+                    clearTimeout(WMtimer);
+                    WMtimer = null; 
+                    player.stop();
+                    player.style.opacity=0;
+                    break;
+
+                case 'force':
+                    console.log('4: force play wm');
+                    player.load(file);
+                    setTimeout(function () {
+                        player.seek(0);
+                        player.style.opacity=1;
+                        player.play();
+                    }, 200);
+                    setTimeout(function () {
+                        player.style.opacity=0;
+                        if (WMtimer) {
+                            clearTimeout(WMtimer);
+                            spxWM(1,ref);
+                        } else {
+                            clearTimeout(WMtimer);
+                            WMtimer = null; 
+                        }
+                    }, fadeOutAfter*1000);
+                    break;
+            }
+        }
+
+        function protocolCheck() {
+            // check if we are http or file.
+            let protocol = location.protocol;
+            if (protocol != "http:" && protocol != "https:") {
+                alert('Please use this via server! Functions and CORS may not work when used as a file. (Current protocol: ' + protocol + ')');
+            }
+       }
+            
+        function remoteFunction(LayerNro, functionName, arg) {
+            LayerNro = validateLayerNro(LayerNro);
+            if (!LayerNro) { return }
+            let iframe = 'layer' + LayerNro;
+            document.getElementById(iframe).contentWindow.echo(arg);
+        }
+
+        function populateLayer(LayerNro,TemplateFileRef='', forced=false) {
+            let projectFormat = incomingData.projectFormat || 'SPX'; // default value
+            if (!forced) {
+                LayerNro = validateLayerNro(LayerNro);
+                if (!LayerNro) { return }
+            }
+            let renderTarget = setTarget(LayerNro, projectFormat);
+            let templa = '';
+
+            if (TemplateFileRef!='') {
+                templa = TemplateRoot + TemplateFileRef;
+            } else {
+                templa = TemplateRoot + 'empty.html';
+            }
+
+            templa = templa.replace(/\/\//g, "/");
+            let urlParams = new URLSearchParams(window.location.search);
+            let customParams = '';
+            for(let param of urlParams) {
+                customParams += '&' + param[0] + '=' + param[1];
+            }
+            let ranNro = (new Date()).getTime() + Math.floor(Math.random() * 1000000);
+            document.getElementById(renderTarget).src=templa + "?random=" + ranNro + customParams;
+        }
+
+        function playLayer(LayerNro,fieldData, projectFormat = 'SPX', incomingData) {
+            LayerNro = validateLayerNro(LayerNro);
+            if (!LayerNro) { return }
+            let renderTarget = setTarget(LayerNro, projectFormat)
+            let formattedJSON = formatJSONAndSetDomFields(fieldData, renderTarget);
+            let manifestPath = incomingData.relpath;
+            if (projectFormat === "OGRAF") {
+                loadTheGraphic("/templates" + manifestPath, renderTarget, incomingData);
+            } else {
+                document.getElementById(renderTarget).contentWindow?.update(formattedJSON);
+                document.getElementById(renderTarget).contentWindow?.play();
+            }
+        }
+
+        async function updateLayer(LayerNro,fieldData, projectFormat = "SPX") {
+            LayerNro = validateLayerNro(LayerNro);
+            if (!LayerNro) { return }
+            let renderTarget = setTarget(LayerNro, projectFormat)
+            let formattedJSON = formatJSONAndSetDomFields(fieldData, renderTarget);
+            if (projectFormat === "OGRAF") {
+                let ogData = {};
+                if (fieldData) {
+                    fieldData.forEach(function (item) {
+                        if (!item || typeof item !== 'object') return;
+                        if (item.field) {
+                            ogData[item.field] = item.value;
+                        } else {
+                            let key = Object.keys(item)[0];
+                            if (key) ogData[key] = item[key];
+                        }
+                    });
+                }
+                if (graphicInstances[renderTarget] && typeof graphicInstances[renderTarget].updateAction === 'function') {
+                    graphicInstances[renderTarget].updateAction({ data: ogData });
+                }
+            } else {
+                let frame = document.getElementById(renderTarget);
+                if (frame && frame.contentWindow && typeof frame.contentWindow.update === 'function') {
+                    frame.contentWindow.update(formattedJSON);
+                }
+            }
+        }
+
+        function formatJSONAndSetDomFields(fieldData, iframeID) {
+            let formattedJsonOut = {};
+            if (fieldData) {
+                fieldData.forEach((item) => {
+                    if (!item || typeof item !== 'object') return;
+                    if (item.field) {
+                        formattedJsonOut[item.field] = item.value;
+                    } else {
+                        let KEY = Object.keys(item)[0];
+                        if (KEY) formattedJsonOut[KEY] = item[KEY];
+                    }
+                });
+                return JSON.stringify(formattedJsonOut)
+            }
+        }
+
+        function stopLayer(LayerNro, projectFormat = "SPX") {
+            if (!allowLayerControl(LayerNro)) return; // check layer param
+            LayerNro = validateLayerNro(LayerNro);
+            let renderTarget = setTarget(LayerNro, projectFormat)
+            if (projectFormat === "OGRAF") {
+                graphicInstances[renderTarget]?.stopAction({})
+            } else {
+                document.getElementById(renderTarget).contentWindow?.stop();
+            }
+        }
+
+        var url_string = window.location.href;
+        var url = new URL(url_string);
+        let TemplateRoot;
+        var GCserver = url.searchParams.get("gc") || undefined;
+        if (GCserver==undefined) {
+            TemplateRoot = "/templates/";
+            var socket = io();
+        } else {
+            TemplateRoot = "templates/";
+            var socket = io(GCserver);
+        }
+
+        socket.on('connect', function () {
+            data={};
+            data.name   = 'SPX_RENDERER'; // <---- Name of this socket connection
+            data.spxcmd = 'identifyClient';
+            socket.emit('SPXMessage2Server', data);
+        });
+
+        socket.on('SPXMessage2Client', function (data) {
+            incomingData = data;
+            let LayerNro;
+            let projectFormat = ""
+            let customCommand = ""
+            switch (data.spxcmd) {
+                case 'reloadRendererWithLayers':
+                    let currURL = window.location.href;
+                    const queryString = window.location.search;
+                    const urlParams = new URLSearchParams(queryString);
+                    let userName  = urlParams.get('name') || 'NO_NAME';
+                    let nameMatch = (userName.toUpperCase() === data?.name?.toUpperCase());
+                    if (urlParams.get('remote')=='true' && nameMatch) {
+                        let baseURL = currURL.split('?')[0];
+                        let layerList = "[" + data.layers.join(',') + "]";
+                        if (data?.layers?.length>0 ) {
+                            window.location.href = baseURL + '?layers=' + layerList + '&remote=true&name=' + userName;
+                        } else {
+                            window.location.href = baseURL + '?remote=true&name=' + userName;
+                        }
+                    }
+                    break;
+
+                case 'clearAllLayers':
+                    spxWM(3);
+                    document.getElementById('root').style.opacity=0;
+                    document.querySelectorAll('.htmlFrame').forEach(function(frame,index) {
+                        LayerNro = (index+1);
+                        clearLayer(LayerNro,'');
+                    });
+
+                    document.querySelectorAll('.ografFrame').forEach(function(frame,index) {
+                        LayerNro = (index+1);
+                        frame.innerHTML = '';
+                    });
+                    
+                    setTimeout(function() {
+                        document.getElementById('root').style.opacity=1;
+                    }, 200);
+                    break;
+
+                case 'clearLayer':
+                    clearLayer(data.layerno);
+                    break;
+
+                case 'loadTemplate':
+                    populateLayer(data.webplayout,data.relpath);
+                    break;
+
+                case 'forceWM':
+                    spxWM(4);
+                    break;
+
+                case 'playTemplate':
+                projectFormat = incomingData.projectFormat || 'SPX';
+                    if (data.modify && data.modify==='autoPlayLocal' ) {
+                        if (!isLocalRenderer()) {
+                            return;
+                        }
+                    }
+
+                    LayerNro = validateLayerNro(data.webplayout);
+                    if (!LayerNro) { return }
+                    if (projectFormat === "OGRAF") {
+                        playLayer(LayerNro, data.fields, projectFormat, incomingData);
+                    }else {
+                        document.getElementById('layer' + LayerNro).onload = function() {
+                            playLayer(LayerNro, data.fields, projectFormat, incomingData);
+                        };
+                    }
+
+                    populateLayer(data.webplayout,data.relpath);
+                    break;
+
+                case 'nextTemplate':
+                    projectFormat = incomingData.projectFormat || 'SPX';
+                    LayerNro = validateLayerNro(data.webplayout);
+                    let renderTarget = setTarget(LayerNro, projectFormat);
+                    if (!LayerNro) { return }
+                    if (projectFormat === "OGRAF") {
+                        graphicInstances[renderTarget].playAction();
+                    } else {
+                        document.getElementById(renderTarget).contentWindow?.next();
+                    }
+                    break;
+
+                case 'updateTemplate':
+                    projectFormat = incomingData.projectFormat || 'SPX';
+                    LayerNro = validateLayerNro(data.webplayout);
+                    setTimeout(function(){ updateLayer(data.webplayout, data.fields, projectFormat); }, 10);
+                    break;
+
+                case 'stopTemplate':
+                    projectFormat = incomingData.projectFormat || 'SPX'; // default value
+                    LayerNro = validateLayerNro(data.webplayout);
+                    if (!LayerNro) { return }
+                    stopLayer(LayerNro, projectFormat);
+                    break;
+
+                case 'customAction':
+                    LayerNro = validateLayerNro(data.webplayout)
+                    graphicInstances['div' + LayerNro].customAction({id: incomingData.id})
+
+
+                case 'invokeFunction':
+                    LayerNro = validateLayerNro(data.webplayout);
+                    if (!LayerNro) { return }
+                    try {
+                        // Important change! --------------------------------------------------
+                        // Starting from version 1.2.0 it is recommended to use
+                        // "data.function" and "data.params" instead of "data.invoke"
+                        // that was a string representation of a function call with
+                        // parameters. Server will log all uses of the old "data.invoke"
+                        // and will recommend to use the new "data.function" and "data.params"
+                        // instead. The old "data.invoke" will be deprecated in the future.
+                        // --------------------------------------------------------------------
+
+                        if (data.function) {
+                            var myFunction = data.function;
+                            var myParamets = data.params || null;
+                            if (typeof document.getElementById('layer' + LayerNro).contentWindow[myFunction] === "function") {
+                                let paramPreview = '';
+                                if (myParamets && myParamets!="undefined") {
+                                    paramPreview = 'First 30 chars of args: ' + myParamets.substring(0, 30);
+                                } else {
+                                    paramPreview = 'No args.';
+                                }
+                                document.getElementById('layer' + LayerNro).contentWindow[myFunction](myParamets);
+                            } else {
+                                console.warn('Function "' + myFunction + '" not found on layer ' + LayerNro + '. Verify function and loaded template.');
+                            }
+
+                            let ografLayer = document.getElementById('div' + LayerNro)
+                            let ografFrame = ografLayer.querySelector('.ografRenderTarget').querySelector('iframe')
+                            let ografContent = ografFrame.contentWindow
+                            if (typeof ografContent[myFunction] === "function") {
+                                ografContent[myFunction](myParamets);
+                            } else {
+                                console.warn('Function "' + myFunction + '" not found on OGraf ' + LayerNro + '. Verify function and loaded graphic.');
+                            }
+
+                        } else {
+                            if  (data.invoke) {
+                                let warning = '\DEPRECATION WARNING\n';
+                                warning    += '`data.invoke` will be deprecated in the next SPX version. Refactor your extensions to '
+                                warning    += 'use `data.function` and `data.params` instead when calling the /gc/playout API or use ';
+                                warning    += 'the public API endpoint /api/v1/invokeTemplateFunction instead.\n';
+                                warning    += 'You had a call [' + data.invoke + '].\n\n';
+                                console.warn(warning);
+                                let myFunction = data.invoke.split('(')[0]; // Checking if template has this function
+                                if (typeof document.getElementById('layer' + LayerNro).contentWindow[myFunction] === "function") { 
+                                    eval("document.getElementById('layer' + " + LayerNro + ").contentWindow." + data.invoke);
+                                } else {
+                                    console.warn('Function "' + myFunction + '" not found on layer ' + LayerNro + '. Verify function and loaded template.');
+                                }
+                            }
+                        }
+                    } catch(err) {
+                        console.warn('Error invoking "' + myFunction + '" on layer ' + LayerNro + '. Verify function and loaded template.');
+                    }
+                    break;
+
+                case 'setRendererBackgroundImage':
+                    if (data.background != '' ) {
+                        document.getElementById('root').style.backgroundImage = 'url(/' + data.background + ')';
+                    } else {
+                        document.getElementById('root').style.backgroundImage = '';
+                    }
+                    break;
+
+                default:
+                    // console.log('Unknown SPXMessage2Client command in renderer: ' + data.spxcmd);
+            }
+        });
+
+        socket.on('SPXWebRendererMessage', function (data) {
+            // Handles messages coming from server to this client.
+            // All comms using 'SPXWebRendererMessage' as a conduit with data object and
+            // data.spxcmd as function identifier. Additional object values are payload.
+            // console.log('SPXWebRendererMessage received (but doing nothing to it)', data)
+        }); // socketMessage handler ended
+
+        window.addEventListener('load',protocolCheck,false);
+
+
+  </script>
+
+</head>
+
+ <body>
+    <div id="root">
+        <dotlottie-player id="wm"></dotlottie-player>
+        {{#ifValue hideCursor "true"}}
+            <div id="cursorHider"></div>
+        {{/ifValue}}
+        <!-- SPX Solo does not support in-layer transitions -->
+        <iframe class="frame htmlFrame" allow="autoplay" id="layer1"  style="z-index: 101;" src="about:blank"></iframe>
+        <iframe class="frame htmlFrame" allow="autoplay" id="layer2"  style="z-index: 102;" src="about:blank"></iframe>
+        <iframe class="frame htmlFrame" allow="autoplay" id="layer3"  style="z-index: 103;" src="about:blank"></iframe>
+        <iframe class="frame htmlFrame" allow="autoplay" id="layer4"  style="z-index: 104;" src="about:blank"></iframe>
+        <iframe class="frame htmlFrame" allow="autoplay" id="layer5"  style="z-index: 105;" src="about:blank"></iframe>
+        <div class="frame ografFrame" allow="autoplay" id="div1" style="z-index: 201"></div>
+        <div class="frame ografFrame" allow="autoplay" id="div2" style="z-index: 202"></div>
+        <div class="frame ografFrame" allow="autoplay" id="div3" style="z-index: 203"></div>
+        <div class="frame ografFrame" allow="autoplay" id="div4" style="z-index: 204"></div>
+        <div class="frame ografFrame" allow="autoplay" id="div5" style="z-index: 205" ></div> 
+    </div>
+    <div class="debugMessage" id="debugMessage" style="opacity:0; position: absolute; z-index:1000;"></div>
+</body>
+</html>

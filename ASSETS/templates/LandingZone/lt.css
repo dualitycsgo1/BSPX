@@ -1,0 +1,79 @@
+.lt {
+  position:absolute; left:80px; bottom:118px;
+  display:flex; align-items:stretch;
+  max-width:980px;
+}
+.lt .ticket {
+  transform: translateY(24px);
+  opacity: 0;
+}
+.gfx.on .ticket {
+  animation: passIn 0.7s cubic-bezier(.16,1,.3,1) forwards;
+}
+.lt .stub { transform: scaleY(0); transform-origin: top center; }
+.gfx.on .stub { animation: stubDrop 0.45s 0.12s cubic-bezier(.2,1.2,.3,1) both; }
+.lt .face {
+  clip-path: inset(0 100% 0 0);
+}
+.gfx.on .face { animation: faceWipe 0.55s 0.28s cubic-bezier(.2,.8,.2,1) forwards; }
+.lt .body { opacity:0; transform: translateY(10px); }
+.gfx.on .body { animation: bodyIn 0.45s 0.5s ease forwards; }
+.lt .who { letter-spacing: .08em; }
+.gfx.on .who { animation: tracking 0.6s 0.55s ease forwards; }
+@keyframes passIn {
+  to { opacity:1; transform:none; }
+}
+@keyframes stubDrop {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@keyframes faceWipe {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes bodyIn {
+  to { opacity:1; transform:none; }
+}
+@keyframes tracking {
+  from { letter-spacing: .18em; }
+  to { letter-spacing: .02em; }
+}
+.lt.right { left:auto; right:80px; }
+.ticket {
+  display:flex; background:rgba(10,10,12,.94);
+  border:1px solid #2c2c30;
+  min-height:118px;
+}
+.stub {
+  width:92px; background:var(--lz);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:8px; color:#fff;
+}
+.stub img { width:42px; height:42px; object-fit:contain; }
+.stub .g {
+  font-family:"Barlow Condensed",sans-serif; font-weight:800;
+  letter-spacing:.12em; font-size:16px;
+}
+.body { padding:16px 22px 14px; display:flex; flex-direction:column; justify-content:center; min-width:320px; }
+.who { font-size:44px; }
+.job { margin-top:6px; font-size:14px; letter-spacing:.2em; text-transform:uppercase; color:var(--fog); font-weight:600; }
+.row { display:flex; align-items:center; gap:18px; }
+.face {
+  width:118px; background:#111;
+  background-size:cover; background-position:center top;
+  border-right:1px solid #2c2c30;
+}
+.perfs {
+  width:16px;
+  background:
+    radial-gradient(circle at 8px 10px, transparent 5px, #0a0a0c 6px) 0 0 / 16px 20px;
+  border-left:1px dashed #3a3a3e;
+}
+.mini {
+  display:flex; gap:22px; margin-top:8px;
+  font-family:"IBM Plex Mono",monospace; font-size:11px; color:#bdbdbd; letter-spacing:.08em;
+}
+.stack { display:flex; flex-direction:column; gap:10px; }
+.lt3 .ticket { min-height:auto; }
+.lt3 .body { padding:12px 20px; }
+.lt3 .who { font-size:32px; }

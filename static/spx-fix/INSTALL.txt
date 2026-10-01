@@ -1,0 +1,30 @@
+SPX Graphics Controller — UPDATE fix
+====================================
+
+Copy these files into your SPX install (the folder that contains server.js).
+Overwrite when asked.
+
+  views/view-renderer.handlebars
+  views/view-controller.handlebars
+  static/js/spx_gc.js
+  static/js/spx_controller.js
+
+If your folder looks like C:\Users\duality\Downloads\SPX\spx-gc\
+the targets are:
+
+  C:\Users\duality\Downloads\SPX\spx-gc\views\view-renderer.handlebars
+  C:\Users\duality\Downloads\SPX\spx-gc\views\view-controller.handlebars
+  C:\Users\duality\Downloads\SPX\spx-gc\static\js\spx_gc.js
+  C:\Users\duality\Downloads\SPX\spx-gc\static\js\spx_controller.js
+
+Then:
+
+1. Stop SPX (Ctrl+C in the terminal, or close the window).
+2. Start it again:  node server.js
+3. Hard-refresh the controller (Ctrl+F5).
+4. Hard-refresh the renderer window too (the left screen).
+5. PLAY the schedule, change a field, click UPDATE.
+
+view-renderer.handlebars is the important one for "UPDATE does nothing
+in the renderer". The renderer window must be refreshed or it keeps
+the old page.

@@ -1,0 +1,42 @@
+{
+  "general": {
+    "username": "",
+    "password": "",
+    "hostname": "",
+    "greeting": "",
+    "langfile": "english.json",
+    "loglevel": "info",
+    "launchBrowser": false,
+    "apikey": "",
+    "logfolder": "/workspace/spx-gc/LOG/",
+    "dataroot": "/workspace/spx-gc/DATAROOT/",
+    "templatesource": "spx-ip-address",
+    "port": 8080,
+    "disableConfigUI": false,
+    "disableLocalRenderer": false,
+    "disableOpenFolderCommand": false,
+    "disableSeveralControllersWarning": true,
+    "hideRendererCursor": false,
+    "resolution": "HD",
+    "preview": "none",
+    "renderer": "normal",
+    "autoplayLocalRenderer": true,
+    "recents": [
+      "LndZ/AA"
+    ]
+  },
+  "casparcg": {
+    "servers": []
+  },
+  "osc": {
+    "enable": false,
+    "port": 57121
+  },
+  "globalExtras": {
+    "customscript": "/ExtraFunctions/demoFunctions.js",
+    "CustomControls": []
+  },
+  "warning": "Modifications done in the SPX will overwrite this file.",
+  "copyright": "(c) 2020- SPX Graphics (https://spxgraphics.com)",
+  "updated": "2026-10-01T08:53:30.807Z"
+}

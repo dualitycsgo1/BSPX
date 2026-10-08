@@ -2195,18 +2195,103 @@ function fccMatchStatus(status) {
     return Object.prototype.hasOwnProperty.call(map, key) ? map[key] : (status || '');
 }
 
+function fccPlayerName(player) {
+    if (!player) return '';
+    if (typeof player === 'string') return player;
+    return player.name || player.displayName || player.username || '';
+}
+
+function fccMatchId(match) {
+    var id = match.id || match._id || match.matchId;
+    if (id && typeof id === 'object') id = id.$oid || id.id || id._id || '';
+    if (id == null || id === '') return '';
+    return String(id);
+}
+
+function fccMatchRound(match) {
+    var round = match.round != null ? match.round : match.roundNumber;
+    var n = parseInt(round, 10);
+    return isNaN(n) ? -1 : n;
+}
+
+function fccMatchList(body) {
+    if (Array.isArray(body)) return body;
+    if (!body || typeof body !== 'object') return null;
+    var keys = ['matches', 'data', 'items', 'results', 'docs'];
+    for (var i = 0; i < keys.length; i++) {
+        if (Array.isArray(body[keys[i]])) return body[keys[i]];
+    }
+    return null;
+}
+
 function fccMatchChoices(list) {
     if (!Array.isArray(list)) return null;
-    return list.map(function (match) {
-        if (!match || match.id == null || match.id === '') return null;
-        var home = (match.homePlayer && match.homePlayer.name) ? match.homePlayer.name : 'afventer';
-        var away = (match.awayPlayer && match.awayPlayer.name) ? match.awayPlayer.name : 'afventer';
-        var round = (match.round == null) ? '' : match.round;
+    var choices = list.map(function (match) {
+        if (!match || typeof match !== 'object') return null;
+        var id = fccMatchId(match);
+        if (!id) return null;
+        var home = fccPlayerName(match.homePlayer) || fccPlayerName(match.home) || match.homeName || 'afventer';
+        var away = fccPlayerName(match.awayPlayer) || fccPlayerName(match.away) || match.awayName || 'afventer';
         return {
-            value: String(match.id),
-            text: 'R' + round + ' · ' + home + ' vs ' + away + ' · ' + fccMatchStatus(match.status)
+            value: id,
+            round: fccMatchRound(match),
+            home: home,
+            away: away,
+            status: fccMatchStatus(match.status)
         };
     }).filter(Boolean);
+    choices.sort(function (a, b) {
+        if (a.round !== b.round) return b.round - a.round;
+        return String(a.home).localeCompare(String(b.home), 'da', { sensitivity: 'base' });
+    });
+    var seen = {};
+    return choices.filter(function (choice) {
+        if (seen[choice.value]) return false;
+        seen[choice.value] = true;
+        return true;
+    }).map(function (choice) {
+        var round = choice.round < 0 ? '' : choice.round;
+        return {
+            value: choice.value,
+            text: 'R' + round + ' · ' + choice.home + ' vs ' + choice.away + ' · ' + choice.status
+        };
+    });
+}
+
+function fccFetchAllMatches(url) {
+    var first = new URL(url, window.location.href);
+    if (!first.searchParams.has('limit') && !first.searchParams.has('per_page') && !first.searchParams.has('pageSize')) {
+        first.searchParams.set('limit', '200');
+    }
+    var collected = [];
+    var seenPage = {};
+    function pull(pageUrl, page) {
+        return fetch(pageUrl, { cache: 'no-store' }).then(function (response) {
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            return response.json();
+        }).then(function (body) {
+            var list = fccMatchList(body);
+            if (!list) throw new Error('not-a-list');
+            var signature = String(list.length) + ':' + (list[0] ? fccMatchId(list[0]) : '');
+            if (seenPage[signature]) return collected;
+            seenPage[signature] = true;
+            collected = collected.concat(list);
+            if (Array.isArray(body)) return collected;
+            var total = Number(body.total || body.count || body.totalCount || collected.length);
+            var pages = Number(body.pages || body.totalPages || 0);
+            var next = body.next || body.nextUrl || '';
+            if (collected.length >= total) return collected;
+            if (page >= 10) return collected;
+            if (next) return pull(next, page + 1);
+            if (pages > page || collected.length < total) {
+                var paged = new URL(pageUrl, window.location.href);
+                paged.searchParams.set('page', String(page + 1));
+                return pull(paged.toString(), page + 1);
+            }
+            return collected;
+        });
+    }
+    return pull(first.toString(), 1);
 }
 
 function dropdownRefreshMessage(select, text) {
@@ -2275,23 +2360,46 @@ function persistDropdownItems(select, choices) {
     });
 }
 
+function editorScope(el) {
+    if (!el || !el.closest) return document;
+    return el.closest('.controller-expanded') || el.closest('.itemrow') || document;
+}
+
+function fieldValueInScope(scope, name) {
+    if (!scope || !name) return '';
+    var field = scope.querySelector('[data-update="' + name + '"]');
+    if (!field) return '';
+    if (field.type === 'checkbox') return field.checked ? '1' : '0';
+    return field.value == null ? '' : String(field.value);
+}
+
+function resolveItemsUrl(select) {
+    var template = select.getAttribute('data-items-url') || '';
+    var scope = editorScope(select);
+    return template.replace(/\{([A-Za-z0-9_]+)\}/g, function (_, name) {
+        return encodeURIComponent(fieldValueInScope(scope, name));
+    });
+}
+
 function refreshDropdownBySelect(select) {
     if (!select) return Promise.resolve();
-    var url = select.getAttribute('data-items-url');
+    var template = select.getAttribute('data-items-url');
+    if (!template) return Promise.resolve();
+    var url = resolveItemsUrl(select);
     if (!url) return Promise.resolve();
-    return fetch(url, { cache: 'no-store' })
-        .then(function (response) {
-            if (!response.ok) throw new Error('HTTP ' + response.status);
-            return response.json();
-        })
-        .then(function (body) {
-            var choices = fccMatchChoices(body);
+    select._itemsUrlSeq = (select._itemsUrlSeq || 0) + 1;
+    var seq = select._itemsUrlSeq;
+    return fccFetchAllMatches(url)
+        .then(function (list) {
+            if (select._itemsUrlSeq !== seq) return;
+            var choices = fccMatchChoices(list);
             if (!choices) throw new Error('not-a-list');
             applyDropdownChoices(select, choices);
             dropdownRefreshMessage(select, '');
             return persistDropdownItems(select, choices);
         })
         .catch(function () {
+            if (select._itemsUrlSeq !== seq) return;
             dropdownRefreshMessage(select, 'Kunne ikke hente kampe');
         });
 }
@@ -2311,6 +2419,20 @@ function refreshDropdownsInEditor(root) {
         if (select.getAttribute('data-items-url')) refreshDropdownBySelect(select);
     });
 }
+
+document.addEventListener('change', function (event) {
+    var input = event.target;
+    if (!input || !input.getAttribute) return;
+    var name = input.getAttribute('data-update');
+    if (!name) return;
+    var scope = editorScope(input);
+    if (!scope || scope === document) return;
+    scope.querySelectorAll('select[data-items-url]').forEach(function (select) {
+        if (select === input) return;
+        var template = select.getAttribute('data-items-url') || '';
+        if (template.indexOf('{' + name + '}') !== -1) refreshDropdownBySelect(select);
+    });
+});
 
 function saveTemplateItemChanges(elementID) {
     // This is a utility function using Axios to POST

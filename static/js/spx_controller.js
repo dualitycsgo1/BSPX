@@ -243,6 +243,7 @@
         var empty = getEmpty();
         if (empty) empty.hidden = true;
         layoutControllerFields(expanded);
+        if (typeof refreshDropdownsInEditor === 'function') refreshDropdownsInEditor(expanded);
         if (typeof AppState === 'function') AppState('EDITING');
     }
 

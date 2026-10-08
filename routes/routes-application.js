@@ -838,6 +838,24 @@ router.get('/gc/:foldername/:filename/:mode?', cors(), spxAuth.CheckLogin, async
 
 	global.rundownData = fileDataAsJSON;
 
+	function overlayDropdownMeta(fileData, profile) {
+		if (!fileData || !profile || !Array.isArray(profile.templates)) return;
+		const byPath = {};
+		profile.templates.forEach((template) => {
+			if (template && template.relpath) byPath[template.relpath] = template;
+		});
+		(fileData.templates || []).forEach((item) => {
+			const proto = byPath[item.relpath];
+			if (!proto || !Array.isArray(proto.DataFields) || !Array.isArray(item.DataFields)) return;
+			item.DataFields.forEach((field) => {
+				const src = proto.DataFields.find((candidate) => candidate.field === field.field && candidate.ftype === field.ftype);
+				if (!src) return;
+				if (!field.itemsUrl && src.itemsUrl) field.itemsUrl = src.itemsUrl;
+				if (!field.refresh && src.refresh) field.refresh = src.refresh;
+			});
+		});
+	}
+
 	function buildControllerEntries(fileData) {
 		const templates = Array.isArray(fileData.templates) ? fileData.templates : [];
 		const dividers = (Array.isArray(fileData.dividers) ? fileData.dividers : []).slice().sort((a, b) => {
@@ -878,6 +896,8 @@ router.get('/gc/:foldername/:filename/:mode?', cors(), spxAuth.CheckLogin, async
 
 	let showprofile = path.join(config.general.dataroot, req.params.foldername, 'profile.json');
 	const profileDataJSONobj = await GetJsonData(showprofile);
+	overlayDropdownMeta(fileDataAsJSON, profileDataJSONobj);
+	fileDataAsJSON.controllerEntries = buildControllerEntries(fileDataAsJSON);
 	let profileData = JSON.stringify(profileDataJSONobj);
 	let projectBackground = '';
 
@@ -1958,7 +1978,12 @@ router.post('/gc/saveItemChanges', spxAuth.CheckLogin, async (req, res) => {
 				req.body.DataFields.forEach(function (PostField) {
 					RundownData.templates[TemplateIdx].DataFields.forEach(function (JsonField) {
 						if (PostField.field == JsonField.field) {
-							JsonField.value = PostField.value;
+							if (PostField.value !== undefined) {
+								JsonField.value = PostField.value;
+							}
+							if (Array.isArray(PostField.items)) {
+								JsonField.items = PostField.items;
+							}
 						}
 					});
 					DataFieldsForCollapsePreview = RundownData.templates[TemplateIdx].DataFields;

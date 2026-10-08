@@ -1376,15 +1376,24 @@
                                   <table class="wide spxTableHeadsmall">
                                     <tr><td class="aright">ftype</td>       <td><input type="text"  class="wide" name="RundownItem[DataFields][{{@index}}][ftype]" value="button"></td></tr>
                                     <tr><td class="aright">fcall</td>       <td><input type="text"  class="wide" name="RundownItem[DataFields][{{@index}}][fcall]" value="{{fcall}}"></td></tr>
+                                    <tr><td class="aright">refresh</td>     <td><input type="text"  class="wide" name="RundownItem[DataFields][{{@index}}][refresh]" value="{{refresh}}"></td></tr>
                                     <tr><td class="aright">title</td>       <td><input type="text"  class="wide" name="RundownItem[DataFields][{{@index}}][title]" value="{{title}}"></td></tr>
                                     <tr><td class="aright">descr</td>       <td><input type="text"  class="wide" name="RundownItem[DataFields][{{@index}}][descr]" value="{{descr}}"></td></tr>
                                   </table>
                                 </div>
                                 <div class="gcpluginbuttondiv" style="white-space: nowrap;">
+                                    {{#if refresh}}
+                                    <button type="button"
+                                      data-spx-refresh="{{refresh}}"
+                                      onClick="event.stopPropagation(); refreshDropdownItems(this);"
+                                      class="btnsmall ripple bg_grey15"
+                                      >{{title}}</button>&nbsp; &nbsp;<span class="gcplugindescription">{{descr}}</span>
+                                    {{else}}
                                     <button type="button"
                                       onClick="{{fcall}}" 
                                       class="btnsmall ripple bg_grey15"
                                       >{{title}}</button>&nbsp; &nbsp;<span class="gcplugindescription">{{descr}}</span>
+                                    {{/if}}
                                 </div>
                               {{/ifValue}}
 
@@ -1427,7 +1436,7 @@
                                   <tr><td class="aright">fType</td>  <td><input type="text" class="wide" name="RundownItem[DataFields][{{@index}}][ftype]" value="dropdown"><BR><BR></td></tr>
                                 </table>
                                 <!-- then visible DOM elements -->
-                                <select data-update="{{field}}" data-role="userEditable" class="gcinput select" name="DropdownValues[{{field}}]" data-tooltip="{{title}}" data-position="right center">
+                                <select data-update="{{field}}" data-items-url="{{itemsUrl}}" data-role="userEditable" class="gcinput select" name="DropdownValues[{{field}}]" data-tooltip="{{title}}" data-position="right center">
                                   <option disabled>{{title}}:</option>
                                   {{#each items}}
                                     {{#ifValue value ../value}}
@@ -1437,6 +1446,7 @@
                                     {{/ifValue}}
                                   {{/each}}
                                 </select>
+                                <div class="dropdown-refresh-msg" style="display:none; color:#f5c16c; font-size:12px; margin-top:4px;"></div>
                               {{/ifValue}}
 
 

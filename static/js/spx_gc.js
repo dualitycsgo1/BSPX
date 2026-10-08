@@ -2184,6 +2184,134 @@ function SaveControllerOrder() {
     });
 } // SaveControllerOrder ended
 
+function fccMatchStatus(status) {
+    var map = {
+        'completed': 'spillet',
+        'scheduled': 'planlagt',
+        'pending': 'afventer',
+        'extract-incomplete': 'udtræk'
+    };
+    var key = String(status || '').toLowerCase();
+    return Object.prototype.hasOwnProperty.call(map, key) ? map[key] : (status || '');
+}
+
+function fccMatchChoices(list) {
+    if (!Array.isArray(list)) return null;
+    return list.map(function (match) {
+        if (!match || match.id == null || match.id === '') return null;
+        var home = (match.homePlayer && match.homePlayer.name) ? match.homePlayer.name : 'afventer';
+        var away = (match.awayPlayer && match.awayPlayer.name) ? match.awayPlayer.name : 'afventer';
+        var round = (match.round == null) ? '' : match.round;
+        return {
+            value: String(match.id),
+            text: 'R' + round + ' · ' + home + ' vs ' + away + ' · ' + fccMatchStatus(match.status)
+        };
+    }).filter(Boolean);
+}
+
+function dropdownRefreshMessage(select, text) {
+    var field = select && select.closest ? select.closest('.controller-field') : null;
+    if (!field) return;
+    var msg = field.querySelector('.dropdown-refresh-msg');
+    if (!msg) return;
+    msg.textContent = text || '';
+    msg.style.display = text ? 'block' : 'none';
+}
+
+function applyDropdownChoices(select, choices) {
+    var current = select.value || '';
+    var titleOpt = select.querySelector('option[disabled]');
+    var titleText = titleOpt ? titleOpt.textContent : '';
+    var previousText = '';
+    var selectedOpt = select.options[select.selectedIndex];
+    if (selectedOpt && !selectedOpt.disabled) previousText = selectedOpt.textContent;
+    var found = false;
+    select.innerHTML = '';
+    if (titleText) {
+        var disabled = document.createElement('option');
+        disabled.disabled = true;
+        disabled.textContent = titleText;
+        select.appendChild(disabled);
+    }
+    choices.forEach(function (choice) {
+        var option = document.createElement('option');
+        option.value = choice.value;
+        option.textContent = choice.text;
+        if (current && choice.value === String(current)) {
+            option.selected = true;
+            found = true;
+        }
+        select.appendChild(option);
+    });
+    if (!current) {
+        var blank = document.createElement('option');
+        blank.value = '';
+        blank.textContent = '';
+        blank.selected = true;
+        select.insertBefore(blank, select.firstChild);
+    } else if (!found) {
+        var keep = document.createElement('option');
+        keep.value = current;
+        keep.textContent = previousText || current;
+        keep.selected = true;
+        select.appendChild(keep);
+    }
+}
+
+function persistDropdownItems(select, choices) {
+    var itemrow = spxClosestItemrow(select);
+    var file = document.getElementById('datafile');
+    if (!itemrow || !file) return Promise.resolve();
+    return axios.post('/gc/saveItemChanges', {
+        rundownfile: file.value,
+        epoch: itemrow.getAttribute('data-spx-epoch'),
+        DataFields: [{
+            field: select.getAttribute('data-update'),
+            value: select.value,
+            items: choices
+        }]
+    }).catch(function () {
+        dropdownRefreshMessage(select, 'Kampe hentet, men ikke gemt');
+    });
+}
+
+function refreshDropdownBySelect(select) {
+    if (!select) return Promise.resolve();
+    var url = select.getAttribute('data-items-url');
+    if (!url) return Promise.resolve();
+    return fetch(url, { cache: 'no-store' })
+        .then(function (response) {
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            return response.json();
+        })
+        .then(function (body) {
+            var choices = fccMatchChoices(body);
+            if (!choices) throw new Error('not-a-list');
+            applyDropdownChoices(select, choices);
+            dropdownRefreshMessage(select, '');
+            return persistDropdownItems(select, choices);
+        })
+        .catch(function () {
+            dropdownRefreshMessage(select, 'Kunne ikke hente kampe');
+        });
+}
+
+function refreshDropdownItems(button) {
+    if (!button) return;
+    var scope = (button.closest && (button.closest('.controller-expanded') || button.closest('.itemrow'))) || document;
+    var field = button.getAttribute('data-spx-refresh');
+    if (!field) return;
+    var select = scope.querySelector('select[data-update="' + field + '"]');
+    if (select) refreshDropdownBySelect(select);
+}
+
+function refreshDropdownsInEditor(root) {
+    if (!root || !root.querySelectorAll) return;
+    root.querySelectorAll('select[data-items-url]').forEach(function (select) {
+        if (select.getAttribute('data-items-url')) refreshDropdownBySelect(select);
+    });
+}
+
 function saveTemplateItemChanges(elementID) {
     // This is a utility function using Axios to POST
     // A FORM to server and we need to update GUI / DOM

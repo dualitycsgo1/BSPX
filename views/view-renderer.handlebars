@@ -595,17 +595,41 @@
 
                 case 'writeGlobal':
                     if (!data.key) { break; }
+                    var globalJson = JSON.stringify(data.value);
                     try {
-                        localStorage.setItem(String(data.key), JSON.stringify(data.value));
-                        document.querySelectorAll('iframe').forEach(function (frame) {
-                            try {
-                                if (!frame.contentWindow || !frame.getAttribute('src') || frame.getAttribute('src') === 'about:blank') return;
-                                frame.contentWindow.postMessage({ spxGlobalKey: data.key, spxGlobal: data.value }, window.location.origin);
-                            } catch (frameErr) {}
-                        });
-                    } catch (err) {
-                        console.warn('writeGlobal failed', err);
+                        localStorage.setItem(String(data.key), globalJson);
+                    } catch (storeErr) {
+                        console.warn('writeGlobal localStorage failed', storeErr);
                     }
+                    console.log('[SPX writeGlobal]', data.key, globalJson);
+                    var deliverGlobal = function (win) {
+                        if (!win) return;
+                        try {
+                            win.postMessage({ spxGlobalKey: data.key, spxGlobal: data.value }, '*');
+                        } catch (postErr) {}
+                        try {
+                            win.localStorage.setItem(String(data.key), globalJson);
+                            win.dispatchEvent(new win.StorageEvent('storage', {
+                                key: String(data.key),
+                                newValue: globalJson,
+                                url: win.location.href,
+                                storageArea: win.localStorage
+                            }));
+                        } catch (frameErr) {}
+                    };
+                    document.querySelectorAll('iframe').forEach(function (frame) {
+                        var win = frame.contentWindow;
+                        if (!win) return;
+                        var blank = false;
+                        try { blank = !win.location || win.location.href === 'about:blank'; } catch (locErr) { blank = false; }
+                        if (blank) return;
+                        deliverGlobal(win);
+                        try {
+                            win.document.querySelectorAll('iframe').forEach(function (inner) {
+                                deliverGlobal(inner.contentWindow);
+                            });
+                        } catch (nestErr) {}
+                    });
                     break;
 
                 default:

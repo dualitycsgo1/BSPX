@@ -2424,10 +2424,18 @@ function refreshDropdownsInEditor(root) {
 function pathGet(obj, dotted) {
     if (obj == null || !dotted) return '';
     var cur = obj;
+    var parent = null;
     var parts = String(dotted).split('.');
     for (var i = 0; i < parts.length; i++) {
-        if (cur == null) return '';
+        if (cur == null || typeof cur !== 'object') return '';
+        parent = cur;
         cur = cur[parts[i]];
+    }
+    if ((cur == null || cur === '') && parent && parts[parts.length - 1] === 'id') {
+        cur = parent._id || parent.playerId || parent.userId || parent.uuid || '';
+    }
+    if (cur && typeof cur === 'object') {
+        cur = cur.$oid || cur.id || cur._id || '';
     }
     return cur == null ? '' : cur;
 }

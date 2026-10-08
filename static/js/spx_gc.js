@@ -2447,10 +2447,11 @@ function writeItemGlobal(button) {
     if (!key) return;
     var from = button.getAttribute('data-spx-global-from') || '';
     var map = null;
+    var rawMap = button.getAttribute('data-spx-global-map') || '';
     try {
-        map = JSON.parse(button.getAttribute('data-spx-global-map') || '');
+        map = JSON.parse(decodeURIComponent(rawMap));
     } catch (err) {
-        map = null;
+        try { map = JSON.parse(rawMap); } catch (err2) { map = null; }
     }
     var scope = editorScope(button);
     var source = from ? scope.querySelector('[data-update="' + from + '"]') : null;

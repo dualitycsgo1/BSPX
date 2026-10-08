@@ -852,6 +852,14 @@ router.get('/gc/:foldername/:filename/:mode?', cors(), spxAuth.CheckLogin, async
 				if (!src) return;
 				if (!field.itemsUrl && src.itemsUrl) field.itemsUrl = src.itemsUrl;
 				if (!field.refresh && src.refresh) field.refresh = src.refresh;
+				if (!field.globalKey && src.globalKey) field.globalKey = src.globalKey;
+				if (!field.globalFrom && src.globalFrom) field.globalFrom = src.globalFrom;
+				if (!field.globalMap && src.globalMap) field.globalMap = src.globalMap;
+			});
+			proto.DataFields.forEach((src) => {
+				if (!src || !src.field || !src.globalKey) return;
+				const exists = item.DataFields.some((field) => field.field === src.field);
+				if (!exists) item.DataFields.push(JSON.parse(JSON.stringify(src)));
 			});
 		});
 	}
@@ -2002,6 +2010,21 @@ router.post('/gc/saveItemChanges', spxAuth.CheckLogin, async (req, res) => {
 		res.status(500).send(errmsg)  // error 500 AJAX RESPONSE
 	};
 }); // saveItemChanges ended
+
+
+router.post('/gc/writeGlobal', spxAuth.CheckLogin, async (req, res) => {
+	const key = String(req.body.key || '').trim();
+	if (!/^[\w.:-]{1,80}$/.test(key)) {
+		res.status(400).send('Ugyldig global nøgle');
+		return;
+	}
+	io.emit('SPXMessage2Client', {
+		spxcmd: 'writeGlobal',
+		key: key,
+		value: req.body.value
+	});
+	res.status(200).send('Global skrevet');
+});
 
 
 

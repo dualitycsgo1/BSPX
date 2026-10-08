@@ -593,6 +593,21 @@
                     }
                     break;
 
+                case 'writeGlobal':
+                    if (!data.key) { break; }
+                    try {
+                        localStorage.setItem(String(data.key), JSON.stringify(data.value));
+                        document.querySelectorAll('iframe').forEach(function (frame) {
+                            try {
+                                if (!frame.contentWindow || !frame.getAttribute('src') || frame.getAttribute('src') === 'about:blank') return;
+                                frame.contentWindow.postMessage({ spxGlobalKey: data.key, spxGlobal: data.value }, window.location.origin);
+                            } catch (frameErr) {}
+                        });
+                    } catch (err) {
+                        console.warn('writeGlobal failed', err);
+                    }
+                    break;
+
                 default:
                     // console.log('Unknown SPXMessage2Client command in renderer: ' + data.spxcmd);
             }

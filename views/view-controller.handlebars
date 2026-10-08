@@ -1382,6 +1382,15 @@
                                   </table>
                                 </div>
                                 <div class="gcpluginbuttondiv" style="white-space: nowrap;">
+                                    {{#if globalKey}}
+                                    <button type="button"
+                                      data-spx-global-key="{{globalKey}}"
+                                      data-spx-global-from="{{globalFrom}}"
+                                      data-spx-global-map="{{jsonString globalMap}}"
+                                      onClick="event.stopPropagation(); writeItemGlobal(this);"
+                                      class="btnsmall ripple bg_grey15"
+                                      >{{title}}</button>&nbsp; &nbsp;<span class="gcplugindescription">{{descr}}</span>
+                                    {{else}}
                                     {{#if refresh}}
                                     <button type="button"
                                       data-spx-refresh="{{refresh}}"
@@ -1393,6 +1402,7 @@
                                       onClick="{{fcall}}" 
                                       class="btnsmall ripple bg_grey15"
                                       >{{title}}</button>&nbsp; &nbsp;<span class="gcplugindescription">{{descr}}</span>
+                                    {{/if}}
                                     {{/if}}
                                 </div>
                               {{/ifValue}}

@@ -2394,6 +2394,7 @@ function refreshDropdownBySelect(select) {
             if (select._itemsUrlSeq !== seq) return;
             var choices = fccMatchChoices(list);
             if (!choices) throw new Error('not-a-list');
+            select._itemsUrlRecords = list;
             applyDropdownChoices(select, choices);
             dropdownRefreshMessage(select, '');
             return persistDropdownItems(select, choices);
@@ -2418,6 +2419,101 @@ function refreshDropdownsInEditor(root) {
     root.querySelectorAll('select[data-items-url]').forEach(function (select) {
         if (select.getAttribute('data-items-url')) refreshDropdownBySelect(select);
     });
+}
+
+function pathGet(obj, dotted) {
+    if (obj == null || !dotted) return '';
+    var cur = obj;
+    var parts = String(dotted).split('.');
+    for (var i = 0; i < parts.length; i++) {
+        if (cur == null) return '';
+        cur = cur[parts[i]];
+    }
+    return cur == null ? '' : cur;
+}
+
+function findItemsUrlRecord(select, list) {
+    var wanted = select ? String(select.value || '') : '';
+    if (!wanted || !Array.isArray(list)) return null;
+    for (var i = 0; i < list.length; i++) {
+        if (fccMatchId(list[i]) === wanted) return list[i];
+    }
+    return null;
+}
+
+function writeItemGlobal(button) {
+    if (!button) return;
+    var key = button.getAttribute('data-spx-global-key');
+    if (!key) return;
+    var from = button.getAttribute('data-spx-global-from') || '';
+    var map = null;
+    try {
+        map = JSON.parse(button.getAttribute('data-spx-global-map') || '');
+    } catch (err) {
+        map = null;
+    }
+    var scope = editorScope(button);
+    var source = from ? scope.querySelector('[data-update="' + from + '"]') : null;
+
+    function publish(payload) {
+        payload.ts = Date.now();
+        axios.post('/gc/writeGlobal', { key: key, value: payload })
+            .then(function () {
+                if (typeof statusbar === 'function') statusbar('Skrevet til ' + key);
+            })
+            .catch(function () {
+                if (typeof statusbar === 'function') statusbar('Kunne ikke skrive til ' + key, 'error');
+            });
+    }
+
+    function fromRecord(record) {
+        var payload = {};
+        if (map && typeof map === 'object') {
+            Object.keys(map).forEach(function (outKey) {
+                var path = map[outKey];
+                var value = '';
+                if (path === 'now') value = Date.now();
+                else if (typeof path === 'string' && path.charAt(0) === '{' && path.charAt(path.length - 1) === '}') {
+                    value = fieldValueInScope(scope, path.slice(1, -1));
+                } else {
+                    value = pathGet(record, path);
+                }
+                payload[outKey] = value == null ? '' : String(value);
+            });
+        }
+        if (source && source.value && payload.match == null) payload.match = String(source.value);
+        publish(payload);
+    }
+
+    if (source && source.getAttribute('data-items-url') && map) {
+        var cached = findItemsUrlRecord(source, source._itemsUrlRecords);
+        if (cached) {
+            fromRecord(cached);
+            return;
+        }
+        var url = resolveItemsUrl(source);
+        if (!url || !source.value) {
+            if (typeof statusbar === 'function') statusbar('Vælg et opgør først', 'warn');
+            return;
+        }
+        fccFetchAllMatches(url).then(function (list) {
+            source._itemsUrlRecords = list;
+            var found = findItemsUrlRecord(source, list);
+            if (!found) throw new Error('missing');
+            fromRecord(found);
+        }).catch(function () {
+            if (typeof statusbar === 'function') statusbar('Kunne ikke finde det valgte opgør', 'error');
+        });
+        return;
+    }
+
+    var payload = {};
+    scope.querySelectorAll('[data-update]').forEach(function (el) {
+        var name = el.getAttribute('data-update');
+        if (!name || Object.prototype.hasOwnProperty.call(payload, name)) return;
+        payload[name] = fieldValueInScope(scope, name);
+    });
+    publish(payload);
 }
 
 document.addEventListener('change', function (event) {

@@ -581,6 +581,12 @@ app.engine('handlebars', exphbs.engine({
         return "// Stringified JSON\n\n" + JSON.stringify(obj, null, 4);
     },
 
+    jsonString(obj) {
+        if (obj == null || obj === '') return '';
+        if (typeof obj === 'string') return obj;
+        return JSON.stringify(obj);
+    },
+
     // Get template name from filepath
     nameFromTemplatePath(filepath) {
         return spx.prettifyName(filepath);

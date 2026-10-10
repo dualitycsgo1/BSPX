@@ -1,0 +1,4 @@
+# Started with the Pi. The controller and vMix run on other machines,
+# so they must call http://<pi-ip>:8787 and not 127.0.0.1.
+name=eafc-proxy
+exec=python3 proxy.py

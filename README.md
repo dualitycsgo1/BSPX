@@ -44,6 +44,7 @@ or any other video pipeline supporting HTML sources.
 >
 > Graphics developers using this build: [editor buttons and live dropdowns](docs/editor-buttons.md).
 > Status API for Companion and other controllers: [item status](docs/api-status.md).
+> Project helpers that must start with the Pi: [sidecars](docs/sidecars.md).
 
 
 

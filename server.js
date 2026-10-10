@@ -102,7 +102,7 @@ macaddress.one(function (err, mc) {
 // Setup Morgan
 let LOGFOLDER = config.general.logfolder || spx.getStartUpFolder() + '/LOG';
 var logDirectory = path.normalize(LOGFOLDER);
-fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory)
+fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory, { recursive: true })
 var accessLogStream = rfs.createStream('access.log', {
   interval: '1d', // rotate daily
   path: logDirectory

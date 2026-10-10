@@ -5,7 +5,6 @@ const logger = require('./logger.js');
 const fs = require('fs');
 const path = require('path');
 const moment = require('moment');
-const wavplayer = require('node-wav-player');
 const PlayoutCCG = require('./playout_casparCG.js');
 const glob = require("glob");
 const ip = require('ip')
@@ -682,7 +681,14 @@ module.exports = {
       //     console.log(`stdout: ${stdout}`);
       // });
 
-      wavplayer.play({
+      let player;
+      try {
+        player = require('node-wav-player');
+      } catch (loadError) {
+        logger.warn('WAV playback is not available on this machine: ' + loadError.message);
+        return;
+      }
+      player.play({
         path: AudioFilePath,
       }).then(() => {
         logger.debug('spx.PlayAudio OK ['+ wavFileName +'], ref.message: [' + msg + '].');

@@ -7,9 +7,7 @@ module.exports = {
 
     makeFolderIfNotExist: function (fullfolderpath) {
         try {
-            if (!fs.existsSync(fullfolderpath)) {
-                fs.mkdirSync(fullfolderpath);
-            }
+            fs.mkdirSync(fullfolderpath, { recursive: true });
             return true
         } catch (error) {
             console.log('makeFolderIfNotExist: error while checking or creating folder [' + fullfolderpath + '].' + error);
@@ -105,11 +103,18 @@ module.exports = {
                     global.config = JSON.parse(configFileStr);
                 }
 
-                // folderchecks (improved in 1.0.15)
-                let CurrentLogFolder = global.config.general.logfolder || CURRENT_FOLDER + '/LOG'
-                let CurrentDataRootF = global.config.general.logfolder || CURRENT_FOLDER + '/DATAROOT'
-                this.makeFolderIfNotExist(CurrentLogFolder);
-                this.makeFolderIfNotExist(CurrentDataRootF);
+                // Resolve LOG and DATAROOT next to the app, unless config has an absolute path.
+                let resolveFolder = function (folder, name) {
+                    let value = folder || name;
+                    if (!path.isAbsolute(value)) value = path.join(CURRENT_FOLDER, value);
+                    value = value.replace(/\\/g, '/');
+                    if (!value.endsWith('/')) value += '/';
+                    return value;
+                };
+                global.config.general.logfolder = resolveFolder(global.config.general.logfolder, 'LOG');
+                global.config.general.dataroot = resolveFolder(global.config.general.dataroot, 'DATAROOT');
+                this.makeFolderIfNotExist(global.config.general.logfolder);
+                this.makeFolderIfNotExist(global.config.general.dataroot);
                 global.configfileref =  CONFIG_FILE;
                 resolve()
             }

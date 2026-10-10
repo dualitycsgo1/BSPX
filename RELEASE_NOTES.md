@@ -14,6 +14,7 @@
 
 Custom build. Documented for graphics developers in [docs/editor-buttons.md](docs/editor-buttons.md).
 
+* `GET /api/v1/item/:id`, `/onair`, `/rundown/items` and `/variables` read rundown status without playout. See [docs/api-status.md](docs/api-status.md).
 * Live dropdowns: `itemsUrl`, `{field}` placeholders, and a `refresh` button
 * Function buttons in the item editor: `refresh`, `call`, `fcall`, and global publish, without playing the graphic
 * `globalKey` writes a mapped payload to renderer `localStorage` and postMessages every open template iframe

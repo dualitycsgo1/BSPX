@@ -144,7 +144,7 @@ router.get('/', function (req, res) {
 						"method": "GET",
 						"param": "/api/v1/item/play/1234567890",
 						"info": "Start item by ID on the active rundown.",
-            "active": false,
+						"active": true,
 					},
 
 					{
@@ -152,7 +152,7 @@ router.get('/', function (req, res) {
 						"method": "GET",
 						"param": "/api/v1/item/continue/1234567890",
 						"info": "Continue to item by ID on the active rundown. Notice this needs support from the template itself and does not work as play or stop.",
-						"active": false,
+						"active": true,
 					},
 
 					{
@@ -160,7 +160,35 @@ router.get('/', function (req, res) {
 						"method": "GET",
 						"param": "/api/v1/item/stop/1234567890",
 						"info": "Stop item by ID on the active rundown.",
-						"active": false,
+						"active": true,
+					},
+					{
+						"vers": "bspx",
+						"method": "GET",
+						"param": "/api/v1/item/1234567890",
+						"info": "Read one rundown item. Returns name, onair, layer, template path and field values. Does not play or stop.",
+						"active": true,
+					},
+					{
+						"vers": "bspx",
+						"method": "GET",
+						"param": "/api/v1/item/1234567890/onair",
+						"info": "Read only whether the item is on air. value and onair are true or false.",
+						"active": true,
+					},
+					{
+						"vers": "bspx",
+						"method": "GET",
+						"param": "/api/v1/rundown/items",
+						"info": "List items in the rundown open in the controller: itemID, name, onair, layer.",
+						"active": true,
+					},
+					{
+						"vers": "bspx",
+						"method": "GET",
+						"param": "/api/v1/variables",
+						"info": "Flat status list for the open rundown, similar to a variable table. Each item exposes item.<id>.onair and item.<id>.name.",
+						"active": true,
 					},
 					{
 						"vers": "v1.0.12",
@@ -660,19 +688,171 @@ router.get('/rundown/focusByID/:id', spxAuth.CheckAPIKey, async (req, res) => {
 // }); // end focusByID
 
 
+function emitItemCommand(res, command, itemID) {
+	const dataOut = {
+		info: ack2,
+		status: 200,
+		message: 'OK',
+		APIcmd: command,
+		itemID: itemID
+	};
+	io.emit('SPXMessage2Controller', dataOut);
+	res.status(200).json(dataOut);
+}
+
+function isOnAir(item) {
+	return String(item && item.onair).toLowerCase() === 'true';
+}
+
+function itemFields(item) {
+	const fields = {};
+	(item.DataFields || []).forEach((field) => {
+		if (!field || !field.field) return;
+		fields[field.field] = field.value == null ? '' : field.value;
+	});
+	return fields;
+}
+
+function publicItem(item, source) {
+	return {
+		status: 200,
+		itemID: String(item.itemID),
+		name: item.description || '',
+		template: item.relpath || '',
+		onair: isOnAir(item),
+		layer: item.webplayout || '',
+		out: item.out || '',
+		project: (source && source.project) || '',
+		rundown: (source && source.rundown) || '',
+		fields: itemFields(item)
+	};
+}
+
+function openRundown() {
+	const rundown = global.rundownData;
+	if (!rundown || !Array.isArray(rundown.templates)) return null;
+	return rundown;
+}
+
+function readRundownFiles() {
+	const rundowns = [];
+	if (!fs.existsSync(directoryPath)) return rundowns;
+	fs.readdirSync(directoryPath).forEach((project) => {
+		const dataDir = path.join(directoryPath, project, 'data');
+		if (!fs.existsSync(dataDir)) return;
+		fs.readdirSync(dataDir).forEach((file) => {
+			if (!file.endsWith('.json')) return;
+			try {
+				const data = JSON.parse(fs.readFileSync(path.join(dataDir, file), 'utf8'));
+				if (!Array.isArray(data.templates)) return;
+				data.project = data.project || project;
+				data.rundown = data.rundown || file.replace(/\.json$/i, '');
+				rundowns.push(data);
+			} catch (error) {
+				logger.verbose('Skipped unreadable rundown ' + file);
+			}
+		});
+	});
+	return rundowns;
+}
+
+function findRundownItem(id) {
+	const wanted = String(id);
+	const memory = openRundown();
+	if (memory) {
+		const live = memory.templates.find((item) => item && String(item.itemID) === wanted);
+		if (live) return { item: live, source: memory };
+	}
+	for (const rundown of readRundownFiles()) {
+		const stored = rundown.templates.find((item) => item && String(item.itemID) === wanted);
+		if (stored) return { item: stored, source: rundown };
+	}
+	return null;
+}
+
 router.get('/item/play/:id', spxAuth.CheckAPIKey, async (req, res) => {
-	res.status(501).json(notInSolo);
-});  // end item play by ID
- 
+	emitItemCommand(res, 'ItemPlayID', req.params.id);
+});
+
 
 router.get('/item/continue/:id', spxAuth.CheckAPIKey, async (req, res) => {
-	res.status(501).json(notInSolo);
-}); // end item continue by ID
+	emitItemCommand(res, 'ItemContinueID', req.params.id);
+});
 
 
 router.get('/item/stop/:id', spxAuth.CheckAPIKey, async (req, res) => {
-	res.status(501).json(notInSolo);
-}); // end item stop by ID
+	emitItemCommand(res, 'ItemStopID', req.params.id);
+});
+
+
+router.get('/item/:id/onair', spxAuth.CheckAPIKey, async (req, res) => {
+	const found = findRundownItem(req.params.id);
+	if (!found) {
+		res.status(404).json({ status: 404, message: 'Item not found', itemID: String(req.params.id), onair: false, value: false });
+		return;
+	}
+	const onair = isOnAir(found.item);
+	res.status(200).json({
+		status: 200,
+		itemID: String(found.item.itemID),
+		name: found.item.description || '',
+		onair: onair,
+		value: onair
+	});
+});
+
+
+router.get('/item/:id', spxAuth.CheckAPIKey, async (req, res) => {
+	const found = findRundownItem(req.params.id);
+	if (!found) {
+		res.status(404).json({ status: 404, message: 'Item not found', itemID: String(req.params.id) });
+		return;
+	}
+	res.status(200).json(publicItem(found.item, found.source));
+});
+
+
+router.get('/rundown/items', spxAuth.CheckAPIKey, async (req, res) => {
+	const rundown = openRundown();
+	if (!rundown) {
+		res.status(404).json({ status: 404, message: 'No rundown is open in the controller' });
+		return;
+	}
+	res.status(200).json({
+		status: 200,
+		project: rundown.project || '',
+		rundown: rundown.rundown || '',
+		items: rundown.templates.filter((item) => item && item.itemID).map((item) => ({
+			itemID: String(item.itemID),
+			name: item.description || '',
+			onair: isOnAir(item),
+			layer: item.webplayout || '',
+			template: item.relpath || ''
+		}))
+	});
+});
+
+
+router.get('/variables', spxAuth.CheckAPIKey, async (req, res) => {
+	const rundown = openRundown();
+	if (!rundown) {
+		res.status(404).json({ status: 404, message: 'No rundown is open in the controller', variables: [] });
+		return;
+	}
+	const variables = [
+		{ name: 'rundown.project', value: rundown.project || '', description: 'Open project' },
+		{ name: 'rundown.name', value: rundown.rundown || '', description: 'Open rundown' }
+	];
+	rundown.templates.forEach((item) => {
+		if (!item || !item.itemID) return;
+		const id = String(item.itemID);
+		const name = item.description || item.relpath || id;
+		variables.push({ name: 'item.' + id + '.onair', value: isOnAir(item), description: name });
+		variables.push({ name: 'item.' + id + '.name', value: name, description: 'Rundown item name' });
+		variables.push({ name: 'item.' + id + '.layer', value: item.webplayout || '', description: name });
+	});
+	res.status(200).json({ status: 200, count: variables.length, variables: variables });
+});
 
 
 router.get('/invokeTemplateFunction/', spxAuth.CheckAPIKey, async (req, res) => {

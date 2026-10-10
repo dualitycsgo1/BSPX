@@ -43,6 +43,7 @@ or any other video pipeline supporting HTML sources.
 > # Full docs available at → [docs.spxgraphics.com](https://docs.spxgraphics.com)
 >
 > Graphics developers using this build: [editor buttons and live dropdowns](docs/editor-buttons.md).
+> Status API for Companion and other controllers: [item status](docs/api-status.md).
 
 
 

@@ -41,6 +41,8 @@ or any other video pipeline supporting HTML sources.
 
 > [!IMPORTANT]
 > # Full docs available at → [docs.spxgraphics.com](https://docs.spxgraphics.com)
+>
+> Graphics developers using this build: [editor buttons and live dropdowns](docs/editor-buttons.md).
 
 
 

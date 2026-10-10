@@ -1,6 +1,6 @@
 
 # SPX Release Notes
-> Updated 2026-05-25<br>
+> Updated 2026-10-10<br>
 <small>Most recent updates are at the top.</small>
 
 <BR>
@@ -9,6 +9,14 @@
 
 
 # Published releases
+
+## **BSPX editor features** (Oct 10 2026)
+
+Custom build. Documented for graphics developers in [docs/editor-buttons.md](docs/editor-buttons.md).
+
+* Live dropdowns: `itemsUrl`, `{field}` placeholders, and a `refresh` button
+* Function buttons in the item editor: `refresh`, `call`, `fcall`, and global publish, without playing the graphic
+* `globalKey` writes a mapped payload to renderer `localStorage` and postMessages every open template iframe
 
 ## **1.4.1** (May 25 2026)
 

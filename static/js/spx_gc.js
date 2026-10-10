@@ -2266,7 +2266,7 @@ function fccFetchAllMatches(url) {
     var collected = [];
     var seenPage = {};
     function pull(pageUrl, page) {
-        return fetch(pageUrl, { cache: 'no-store' }).then(function (response) {
+        return fetch('/gc/fetchItems?url=' + encodeURIComponent(pageUrl), { cache: 'no-store' }).then(function (response) {
             if (!response.ok) throw new Error('HTTP ' + response.status);
             return response.json();
         }).then(function (body) {

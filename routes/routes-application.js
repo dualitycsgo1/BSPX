@@ -2028,6 +2028,27 @@ router.post('/gc/writeGlobal', spxAuth.CheckLogin, async (req, res) => {
 });
 
 
+router.get('/gc/fetchItems', spxAuth.CheckLogin, async (req, res) => {
+	try {
+		const target = new URL(String(req.query.url || ''));
+		if (target.protocol !== 'http:' && target.protocol !== 'https:') {
+			res.status(400).send('Kun http(s)');
+			return;
+		}
+		const response = await axios.get(target.toString(), {
+			timeout: 15000,
+			responseType: 'json',
+			validateStatus: () => true,
+			headers: { Accept: 'application/json' }
+		});
+		res.status(response.status).send(response.data);
+	} catch (error) {
+		logger.error('fetchItems failed: ' + error);
+		res.status(502).send('Kunne ikke hente listen');
+	}
+});
+
+
 
 
 // FUNCTIONS --------------------------------------------------------------------------------------------------

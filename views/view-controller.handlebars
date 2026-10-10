@@ -1376,34 +1376,23 @@
                                   <table class="wide spxTableHeadsmall">
                                     <tr><td class="aright">ftype</td>       <td><input type="text"  class="wide" name="RundownItem[DataFields][{{@index}}][ftype]" value="button"></td></tr>
                                     <tr><td class="aright">fcall</td>       <td><input type="text"  class="wide" name="RundownItem[DataFields][{{@index}}][fcall]" value="{{fcall}}"></td></tr>
+                                    <tr><td class="aright">call</td>        <td><input type="text"  class="wide" name="RundownItem[DataFields][{{@index}}][call]" value="{{call}}"></td></tr>
                                     <tr><td class="aright">refresh</td>     <td><input type="text"  class="wide" name="RundownItem[DataFields][{{@index}}][refresh]" value="{{refresh}}"></td></tr>
                                     <tr><td class="aright">title</td>       <td><input type="text"  class="wide" name="RundownItem[DataFields][{{@index}}][title]" value="{{title}}"></td></tr>
                                     <tr><td class="aright">descr</td>       <td><input type="text"  class="wide" name="RundownItem[DataFields][{{@index}}][descr]" value="{{descr}}"></td></tr>
                                   </table>
                                 </div>
                                 <div class="gcpluginbuttondiv" style="white-space: nowrap;">
-                                    {{#if globalKey}}
                                     <button type="button"
+                                      data-spx-refresh="{{refresh}}"
+                                      data-spx-call="{{call}}"
+                                      data-spx-fcall="{{fcall}}"
                                       data-spx-global-key="{{globalKey}}"
                                       data-spx-global-from="{{globalFrom}}"
                                       data-spx-global-map="{{DataToJSONString globalMap}}"
-                                      onClick="event.stopPropagation(); writeItemGlobal(this);"
+                                      onClick="event.stopPropagation(); runEditorButton(this);"
                                       class="btnsmall ripple bg_grey15"
                                       >{{title}}</button>&nbsp; &nbsp;<span class="gcplugindescription">{{descr}}</span>
-                                    {{else}}
-                                    {{#if refresh}}
-                                    <button type="button"
-                                      data-spx-refresh="{{refresh}}"
-                                      onClick="event.stopPropagation(); refreshDropdownItems(this);"
-                                      class="btnsmall ripple bg_grey15"
-                                      >{{title}}</button>&nbsp; &nbsp;<span class="gcplugindescription">{{descr}}</span>
-                                    {{else}}
-                                    <button type="button"
-                                      onClick="{{fcall}}" 
-                                      class="btnsmall ripple bg_grey15"
-                                      >{{title}}</button>&nbsp; &nbsp;<span class="gcplugindescription">{{descr}}</span>
-                                    {{/if}}
-                                    {{/if}}
                                 </div>
                               {{/ifValue}}
 

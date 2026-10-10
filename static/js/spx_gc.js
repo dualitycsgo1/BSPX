@@ -2414,6 +2414,48 @@ function refreshDropdownItems(button) {
     if (select) refreshDropdownBySelect(select);
 }
 
+function editorFieldValues(scope) {
+    var values = {};
+    if (!scope || !scope.querySelectorAll) return values;
+    scope.querySelectorAll('[data-update]').forEach(function (el) {
+        var name = el.getAttribute('data-update');
+        if (!name || Object.prototype.hasOwnProperty.call(values, name)) return;
+        values[name] = fieldValueInScope(scope, name);
+    });
+    return values;
+}
+
+function runEditorButton(button) {
+    if (!button) return;
+    var scope = editorScope(button);
+    var refresh = button.getAttribute('data-spx-refresh') || '';
+    var callName = (button.getAttribute('data-spx-call') || '').trim();
+    var fcall = (button.getAttribute('data-spx-fcall') || '').trim();
+    var hasGlobal = button.getAttribute('data-spx-global-key');
+    var jobs = Promise.resolve();
+    if (refresh) {
+        var select = scope.querySelector('select[data-update="' + refresh + '"]');
+        if (select) jobs = jobs.then(function () { return refreshDropdownBySelect(select); });
+    }
+    jobs.then(function () {
+        if (callName) {
+            if (typeof window[callName] === 'function') {
+                window[callName](button, editorFieldValues(scope));
+            } else if (typeof statusbar === 'function') {
+                statusbar('Funktionen ' + callName + ' findes ikke', 'warn');
+            }
+        } else if (fcall) {
+            try {
+                var fn = new Function('button', 'values', fcall);
+                fn.call(button, button, editorFieldValues(scope));
+            } catch (err) {
+                if (typeof statusbar === 'function') statusbar('Knap-funktionen fejlede', 'error');
+            }
+        }
+        if (hasGlobal) writeItemGlobal(button);
+    });
+}
+
 function refreshDropdownsInEditor(root) {
     if (!root || !root.querySelectorAll) return;
     root.querySelectorAll('select[data-items-url]').forEach(function (select) {

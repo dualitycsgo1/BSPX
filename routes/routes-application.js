@@ -852,12 +852,13 @@ router.get('/gc/:foldername/:filename/:mode?', cors(), spxAuth.CheckLogin, async
 				if (!src) return;
 				if (!field.itemsUrl && src.itemsUrl) field.itemsUrl = src.itemsUrl;
 				if (!field.refresh && src.refresh) field.refresh = src.refresh;
+				if (!field.call && src.call) field.call = src.call;
 				if (!field.globalKey && src.globalKey) field.globalKey = src.globalKey;
 				if (!field.globalFrom && src.globalFrom) field.globalFrom = src.globalFrom;
 				if (!field.globalMap && src.globalMap) field.globalMap = src.globalMap;
 			});
 			proto.DataFields.forEach((src) => {
-				if (!src || !src.field || !src.globalKey) return;
+				if (!src || !src.field || src.ftype !== 'button') return;
 				const exists = item.DataFields.some((field) => field.field === src.field);
 				if (!exists) item.DataFields.push(JSON.parse(JSON.stringify(src)));
 			});

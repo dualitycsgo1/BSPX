@@ -235,13 +235,6 @@
                 </div>
 
                 <BR>
-
-                <!-- server / msgsrvs / notifications -->
-                <div id="promo" style="opacity: 0;">
-                  <A id="homepagepromolink" href="https://spxgraphics.com/software" target="_mothership">
-                    <img id="homepagepromopict" class="auto-resizable-iframe" SRC="/img/welcome-splash-tiers.png" alt="Splash screen promo">
-                  </A>
-                </div>
               </td>
             </tr>
           </table>
@@ -293,16 +286,6 @@
       // console.log('stats permitted');
       getMessages('{{{curVerInfo}}}');
     {{/ifValue}}
-
-      // fade in promo after a little delay
-      anime({
-          targets:    '#promo',
-          easing:     'linear',
-          opacity:    1,
-          duration:   300,
-          delay:      200
-      });
-
 
     // show message when page loaded
     window.addEventListener('load', (event) => {

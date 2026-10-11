@@ -44,7 +44,14 @@
             <tr>
               <td>{{folder}}</td>
               <td>{{file}}</td>
-              <td>{{#if port}}{{port}}{{else}}—{{/if}}</td>
+              <td>
+                <form method="post" action="/gc/proxy" style="display:inline">
+                  <input type="hidden" name="id" value="{{id}}">
+                  <input type="hidden" name="command" value="port">
+                  <input name="port" value="{{port}}" inputmode="numeric" style="width:5em">
+                  <button class="btn bg_grey15" type="submit">Gem</button>
+                </form>
+              </td>
               <td>{{#if bind}}{{bind}}{{else}}—{{/if}}</td>
               <td>{{#if running}}kører{{#if systemd}} ({{systemd}}){{/if}}{{else}}stoppet{{#if note}}<div class="spxInfotext">{{note}}</div>{{/if}}{{/if}}</td>
               <td>

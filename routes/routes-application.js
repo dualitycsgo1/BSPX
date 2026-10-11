@@ -74,6 +74,7 @@ router.post('/gc/proxy', spxAuth.CheckLogin, function (req, res) {
 		let message = '';
 		if (command === 'start') message = proxies.start(id);
 		else if (command === 'stop') message = proxies.stop(id);
+		else if (command === 'port') message = proxies.setPort(id, req.body.port);
 		else throw new Error('Ukendt kommando');
 		res.redirect('/proxies?message=' + encodeURIComponent(message));
 	} catch (error) {

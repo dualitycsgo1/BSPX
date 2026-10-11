@@ -178,6 +178,39 @@ function stop(id) {
     return info.file + ' stoppet';
 }
 
+function sleep(ms) {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+function rewritePort(text, port) {
+    const re = /port\s*[:=]\s*(['"]?)\d{2,5}\1|(['"](?:0\.0\.0\.0|127\.0\.0\.1|localhost)['"]\s*,\s*)\d{2,5}|\.listen\(\s*\d{2,5}/gi;
+    let count = 0;
+    const next = text.replace(re, function (full) {
+        count += 1;
+        return full.replace(/\d{2,5}/, String(port));
+    });
+    if (!count) throw new Error('Fandt ikke et port-sted i filen. Den skal have port = 8787, port=8787 eller ("0.0.0.0", 8787).');
+    return next;
+}
+
+function setPort(id, rawPort) {
+    const port = parseInt(rawPort, 10);
+    if (!port || port < 1024 || port > 65535) throw new Error('Port skal være mellem 1024 og 65535');
+    const scriptPath = resolveAllowed(id);
+    const before = fs.readFileSync(scriptPath, 'utf8');
+    const next = rewritePort(before, port);
+    if (next !== before) fs.writeFileSync(scriptPath, next);
+    const info = describe(scriptPath);
+    if (!info.running) return info.file + ' gemt på port ' + port + '. Den er stoppet.';
+    const pid = findPid(scriptPath);
+    try { process.kill(pid, 'SIGTERM'); } catch (error) { throw new Error('Kunne ikke genstarte ' + info.file); }
+    const deadline = Date.now() + 2000;
+    while (findPid(scriptPath) && Date.now() < deadline) sleep(100);
+    if (info.systemd) return info.file + ' gemt på port ' + port + '. Tjenesten genstarter selv.';
+    start(id);
+    return info.file + ' gemt på port ' + port + ' og genstartet.';
+}
+
 function restore() {
     readState().forEach(function (id) {
         try { start(id); } catch (error) { console.log('Proxy restore failed for ' + id + ': ' + error.message); }
@@ -188,5 +221,6 @@ module.exports = {
     list: list,
     start: start,
     stop: stop,
+    setPort: setPort,
     restore: restore
 };

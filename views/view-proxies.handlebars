@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+{{>copyright }}
+
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPX | Proxyer</title>
+  <link rel="icon" type="image/png" href="/img/spx-gc.ico">
+  <link rel="stylesheet" type="text/css" href="/css/spx_fonts.css">
+  <link rel="stylesheet" type="text/css" href="/css/spx_layout.css">
+  <link rel="stylesheet" type="text/css" href="/css/spx_forms.css">
+  <link rel="stylesheet" type="text/css" href="/css/spx_colors.css">
+  <script src="/js/fontawesome.all.min.js"></script>
+</head>
+<body class="bg_body">
+  <div class="wrapper">
+    <div class="header">
+      {{>header page="home"}}
+    </div>
+    <div class="content">
+      <div class="centerColumn pM wrapper">
+        <div class="content pM scroller">
+          {{#if message}}<div class="message">{{message}}</div>{{/if}}
+          {{#if error}}<div class="messagerror">{{error}}</div>{{/if}}
+          <table class="wide" border="0">
+            <tr>
+              <td class="vmid tableheaderText">Proxyer</td>
+              <td class="vmid aright"><a href="/">Tilbage</a></td>
+            </tr>
+          </table>
+          <hr>
+          <p class="spxInfotext">Filer der hedder proxy og ligger i et projekt under ASSETS/templates, eller i mappen proxies. Grafikker i vMix kan kun nå en proxy, der lytter på netværket, ikke kun på denne maskine.</p>
+          <table class="wide" cellspacing="8">
+            <tr>
+              <th align="left">Projekt</th>
+              <th align="left">Fil</th>
+              <th align="left">Port</th>
+              <th align="left">Kan nås fra</th>
+              <th align="left">Status</th>
+              <th></th>
+            </tr>
+            {{#each proxies}}
+            <tr>
+              <td>{{folder}}</td>
+              <td>{{file}}</td>
+              <td>{{#if port}}{{port}}{{else}}—{{/if}}</td>
+              <td>{{#if bind}}{{bind}}{{else}}—{{/if}}</td>
+              <td>{{#if running}}kører{{#if systemd}} ({{systemd}}){{/if}}{{else}}stoppet{{/if}}</td>
+              <td>
+                <form method="post" action="/gc/proxy" style="display:inline">
+                  <input type="hidden" name="id" value="{{id}}">
+                  {{#if running}}
+                  <input type="hidden" name="command" value="stop">
+                  <button class="btn bg_orange" type="submit">Stop</button>
+                  {{else}}
+                  <input type="hidden" name="command" value="start">
+                  <button class="btn bg_green" type="submit">Start</button>
+                  {{/if}}
+                </form>
+              </td>
+            </tr>
+            {{else}}
+            <tr><td colspan="6">Ingen proxy-filer fundet.</td></tr>
+            {{/each}}
+          </table>
+        </div>
+      </div>
+    </div>
+    {{>footer}}
+  </div>
+</body>
+</html>

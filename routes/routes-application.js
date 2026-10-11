@@ -21,6 +21,7 @@ const cors = require('cors');
 const { timeStamp } = require("console");
 const http = require('http');
 const axios = require('axios');
+const proxies = require('../utils/spx_proxies.js');
 
 // ROOT ROUTES ----------------------------------------------------------------------------------------------
 
@@ -56,6 +57,29 @@ router.get('/fileBrowser', spxAuth.CheckLogin, function (req, res) {
 	// added in 1.1.1
 	res.render('view-fileBrowser', { layout: false });
 }); // get /fileBrowser end
+
+router.get('/proxies', spxAuth.CheckLogin, function (req, res) {
+	res.render('view-proxies', {
+		layout: false,
+		proxies: proxies.list(),
+		message: req.query.message || '',
+		error: req.query.error || ''
+	});
+});
+
+router.post('/gc/proxy', spxAuth.CheckLogin, function (req, res) {
+	try {
+		const id = String(req.body.id || '');
+		const command = String(req.body.command || '');
+		let message = '';
+		if (command === 'start') message = proxies.start(id);
+		else if (command === 'stop') message = proxies.stop(id);
+		else throw new Error('Ukendt kommando');
+		res.redirect('/proxies?message=' + encodeURIComponent(message));
+	} catch (error) {
+		res.redirect('/proxies?error=' + encodeURIComponent(error.message));
+	}
+});
 
 router.get('/templates/empty.html', function (req, res) {
 	res.render('view-empty', { layout: false });

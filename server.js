@@ -848,6 +848,7 @@ process.on('uncaughtException', function(err) {
 
 
 var server = app.listen(port, '0.0.0.0', (err) => {
+  try { require('./utils/spx_proxies.js').restore(); } catch (proxyError) { console.log('Proxy restore: ' + proxyError.message); }
 
   let splash = '  Copyright 2020- SPX Graphics\n\n' +
   `  SPX Solo version .......... ${global.vers}\n` +  

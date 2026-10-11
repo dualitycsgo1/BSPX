@@ -62,7 +62,7 @@ function walk(dir, found) {
             walk(full, found);
             return;
         }
-        if (entry.isFile() && entry.name.endsWith('.py') && entry.name.toLowerCase().includes('proxy')) {
+        if (entry.isFile() && entry.name.endsWith('.py') && entry.name.toLowerCase().includes('proxy') && !entry.name.startsWith('._')) {
             found.push(full);
         }
     });
@@ -88,13 +88,19 @@ function systemdUnit(pid) {
 
 function findPid(scriptPath) {
     if (!fs.existsSync('/proc')) return 0;
+    const base = path.basename(scriptPath);
+    const dir = path.resolve(path.dirname(scriptPath));
     const entries = fs.readdirSync('/proc');
     for (let i = 0; i < entries.length; i++) {
         if (!/^\d+$/.test(entries[i])) continue;
         const pid = Number(entries[i]);
         if (pid === process.pid) continue;
         const command = commandOf(pid);
-        if (command.indexOf(scriptPath) !== -1 && command.indexOf('python') !== -1) return pid;
+        if (command.indexOf('python') === -1 || command.indexOf(base) === -1) continue;
+        if (command.indexOf(scriptPath) !== -1) return pid;
+        let cwd = '';
+        try { cwd = fs.readlinkSync('/proc/' + pid + '/cwd'); } catch (error) { cwd = ''; }
+        if (path.resolve(cwd) === dir) return pid;
     }
     return 0;
 }
@@ -102,19 +108,29 @@ function findPid(scriptPath) {
 function describe(scriptPath) {
     let text = '';
     try { text = fs.readFileSync(scriptPath, 'utf8'); } catch (error) { text = ''; }
-    const portMatch = text.match(/port\s*[=:(]\s*(\d{2,5})/i);
+    const portMatch = text.match(/port\s*[=:(,]\s*['"]?(\d{2,5})/i) || text.match(/:(\d{4,5})\b/);
     let bind = '';
     if (text.indexOf('0.0.0.0') !== -1) bind = 'netværket';
     else if (text.indexOf('127.0.0.1') !== -1 || text.indexOf('localhost') !== -1) bind = 'kun denne maskine';
     const pid = findPid(scriptPath);
+    const id = path.relative(appRoot(), scriptPath).split(path.sep).join('/');
+    let note = '';
+    if (!pid) {
+        try {
+            const logPath = path.join(logDir(), id.replace(/[\/\\]/g, '_') + '.log');
+            const lines = fs.readFileSync(logPath, 'utf8').trim().split('\n');
+            note = lines[lines.length - 1].slice(-200);
+        } catch (error) { note = ''; }
+    }
     return {
-        id: path.relative(appRoot(), scriptPath).split(path.sep).join('/'),
+        id: id,
         file: path.basename(scriptPath),
         folder: path.basename(path.dirname(scriptPath)),
         port: portMatch ? portMatch[1] : '',
         bind: bind,
         running: pid > 0,
-        systemd: pid > 0 ? systemdUnit(pid) : ''
+        systemd: pid > 0 ? systemdUnit(pid) : '',
+        note: note
     };
 }
 

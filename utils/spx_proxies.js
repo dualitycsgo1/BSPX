@@ -168,13 +168,21 @@ function start(id) {
 function stop(id) {
     const scriptPath = resolveAllowed(id);
     const info = describe(scriptPath);
-    writeState(readState().filter(function (item) { return item !== info.id; }));
-    if (!info.running) return info.file + ' var allerede stoppet';
-    if (info.systemd) {
-        return info.file + ' kører som ' + info.systemd + ' og starter selv igen. Slå den fra én gang med: sudo systemctl disable --now ' + info.systemd;
-    }
     const pid = findPid(scriptPath);
+    if (!pid) {
+        writeState(readState().filter(function (item) { return item !== info.id; }));
+        return info.file + ' var allerede stoppet';
+    }
     process.kill(pid, 'SIGTERM');
+    const deadline = Date.now() + 2000;
+    while (findPid(scriptPath) && Date.now() < deadline) sleep(100);
+    const remainingPid = findPid(scriptPath);
+    if (remainingPid) {
+        const unit = systemdUnit(remainingPid) || info.systemd;
+        const serviceHint = unit && unit !== 'bspx.service' ? ' Stop kun proxy-tjenesten med: sudo systemctl stop ' + unit : '';
+        throw new Error('Kunne ikke stoppe ' + info.file + '.' + serviceHint);
+    }
+    writeState(readState().filter(function (item) { return item !== info.id; }));
     return info.file + ' stoppet';
 }
 
@@ -205,8 +213,12 @@ function setPort(id, rawPort) {
     const pid = findPid(scriptPath);
     try { process.kill(pid, 'SIGTERM'); } catch (error) { throw new Error('Kunne ikke genstarte ' + info.file); }
     const deadline = Date.now() + 2000;
-    while (findPid(scriptPath) && Date.now() < deadline) sleep(100);
-    if (info.systemd) return info.file + ' gemt på port ' + port + '. Tjenesten genstarter selv.';
+    while (findPid(scriptPath) === pid && Date.now() < deadline) sleep(100);
+    const remainingPid = findPid(scriptPath);
+    if (remainingPid && remainingPid !== pid && info.systemd) {
+        return info.file + ' gemt på port ' + port + '. Tjenesten genstartede proxyen.';
+    }
+    if (remainingPid) throw new Error('Kunne ikke genstarte ' + info.file);
     start(id);
     return info.file + ' gemt på port ' + port + ' og genstartet.';
 }

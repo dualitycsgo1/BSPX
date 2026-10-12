@@ -22,6 +22,7 @@ const { timeStamp } = require("console");
 const http = require('http');
 const axios = require('axios');
 const proxies = require('../utils/spx_proxies.js');
+const layerNames = require('../utils/spx_layernames.js');
 
 // ROOT ROUTES ----------------------------------------------------------------------------------------------
 
@@ -43,6 +44,7 @@ router.get('/', spxAuth.CheckLogin, cors(), spx.getNotificationsMiddleware, asyn
 		user: req.session.user,
 		recents: recents,
 		disableConfigUI: disableConfigUI,
+		layers: layerNames.list(),
 		config: config,
 		showMessage: req.session.showMessage
 	});
@@ -65,6 +67,23 @@ router.get('/proxies', spxAuth.CheckLogin, function (req, res) {
 		message: req.query.message || '',
 		error: req.query.error || ''
 	});
+});
+
+router.get('/layernames', spxAuth.CheckLogin, function (req, res) {
+	res.render('view-layernames', {
+		layout: false,
+		layers: layerNames.list(),
+		message: req.query.message || ''
+	});
+});
+
+router.post('/gc/layernames', spxAuth.CheckLogin, function (req, res) {
+	try {
+		layerNames.save(req.body);
+		res.redirect('/layernames?message=' + encodeURIComponent('Layernavne gemt'));
+	} catch (error) {
+		res.render('view-layernames', { layout: false, layers: layerNames.list(), error: error.message });
+	}
 });
 
 router.post('/gc/proxy', spxAuth.CheckLogin, function (req, res) {

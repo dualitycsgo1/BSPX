@@ -158,7 +158,18 @@
     box-shadow: rgba(0, 0, 0, 0.267) 0px 0px 6px;
   }
 
-  </style>
+  .urlGen { margin-top: 1.5em; text-align: left; }
+.urlGenTitle { font-size: 0.8em; opacity: 0.6; margin-bottom: 0.5em; }
+.urlGenLayers { display: flex; flex-wrap: wrap; gap: 6px; }
+.layerChip { font: inherit; font-size: 0.85em; font-weight: normal; text-transform: none; padding: 4px 12px; border: 1px solid rgba(255,255,255,0.2); border-radius: 14px; background: transparent; color: inherit; cursor: pointer; }
+.layerChip span { opacity: 0.75; }
+.layerChip.on { background: #4aa63c; border-color: #4aa63c; color: #fff; }
+.layerChip.on span { opacity: 1; }
+.urlGenRow { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.urlGenLabel { width: 5.5em; font-size: 0.8em; opacity: 0.6; }
+.urlGenRow input { flex: 1; font: inherit; font-size: 0.85em; padding: 5px 8px; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; background: rgba(0,0,0,0.25); color: inherit; }
+.urlGenCopy { font: inherit; font-size: 0.85em; padding: 5px 16px; border: 0; border-radius: 4px; background: #3a5ea8; color: #fff; cursor: pointer; }
+</style>
 
 </head>
 
@@ -215,8 +226,28 @@
                   <button onmouseover="tip('{{lang 'hover.navishows'}}');" class="spxformtext btn spxFlexItem bg_orange ripple" onclick="start();">{{lang 'button.launch'}}</button>
                   <button onmouseover="tip('{{lang 'hover.config'}}');" class="spxformtext btn spxFlexItem bg_grey15 ripple" onclick="appconfig()"><i class="fas fa-wrench"></i>&nbsp;{{lang 'button.config'}}</button>
                   <button onmouseover="tip('Start og stop proxyer');" class="spxformtext btn spxFlexItem bg_grey15 ripple" onclick="document.location='/proxies'">Proxyer</button>
+                  <button onmouseover="tip('Giv layers navne');" class="spxformtext btn spxFlexItem bg_grey15 ripple" onclick="document.location='/layernames'">Layernavne</button>
                   <button onmouseover="tip('{{lang 'hover.docs'}}');" class="spxformtext btn spxFlexItem bg_blue ripple" onclick="help('/')">{{lang 'button.help'}}</button>
                   <button onmouseover="tip('spxgraphics.com');" class="spxformtext btn spxFlexItem bg_blue ripple" onclick="website()">website</button>
+                </div>
+
+                <div class="urlGen">
+                  <div class="urlGenTitle">Renderer-URL</div>
+                  <div class="urlGenLayers">
+                    {{#each layers}}
+                    <button type="button" class="layerChip" data-layer="{{layer}}" onclick="toggleLayerPick(this)">{{layer}}{{#if name}}<span> {{name}}</span>{{/if}}</button>
+                    {{/each}}
+                  </div>
+                  <div class="urlGenRow">
+                    <span class="urlGenLabel">LAN</span>
+                    <input id="rendererUrl" readonly onclick="this.select()">
+                    <button type="button" class="urlGenCopy" onclick="copyRendererUrl('rendererUrl')">Kopiér</button>
+                  </div>
+                  <div class="urlGenRow">
+                    <span class="urlGenLabel">Tailscale</span>
+                    <input id="rendererUrlTs" readonly onclick="this.select()">
+                    <button type="button" class="urlGenCopy" onclick="copyRendererUrl('rendererUrlTs')">Kopiér</button>
+                  </div>
                 </div>
 
                 <!-- Notifications from the SPX messaging service: -->
@@ -299,6 +330,29 @@
 
 
 
+  </script>
+  <script>
+    var TAILSCALE_IP = '100.72.96.30';
+    function updateRendererUrl() {
+      var layers = Array.prototype.slice.call(document.querySelectorAll('.layerChip.on'))
+        .map(function (b) { return parseInt(b.dataset.layer, 10); })
+        .sort(function (a, b) { return a - b; });
+      var path = '/renderer/' + (layers.length ? '?layers=[' + layers.join(',') + ']' : '');
+      var port = window.location.port ? ':' + window.location.port : '';
+      document.getElementById('rendererUrl').value = window.location.origin + path;
+      document.getElementById('rendererUrlTs').value = 'http://' + TAILSCALE_IP + port + path;
+    }
+    function toggleLayerPick(button) {
+      button.classList.toggle('on');
+      updateRendererUrl();
+    }
+    function copyRendererUrl(id) {
+      var input = document.getElementById(id);
+      input.select();
+      if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(input.value);
+      else document.execCommand('copy');
+    }
+    updateRendererUrl();
   </script>
 </body>
 </html>

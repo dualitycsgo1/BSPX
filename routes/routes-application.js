@@ -2073,18 +2073,29 @@ router.post('/gc/writeGlobal', spxAuth.CheckLogin, async (req, res) => {
 
 
 router.get('/gc/fetchItems', spxAuth.CheckLogin, async (req, res) => {
+	const load = (url) => axios.get(url, {
+		timeout: 8000,
+		responseType: 'json',
+		validateStatus: () => true,
+		headers: { Accept: 'application/json' }
+	});
 	try {
 		const target = new URL(String(req.query.url || ''));
 		if (target.protocol !== 'http:' && target.protocol !== 'https:') {
 			res.status(400).send('Kun http(s)');
 			return;
 		}
-		const response = await axios.get(target.toString(), {
-			timeout: 15000,
-			responseType: 'json',
-			validateStatus: () => true,
-			headers: { Accept: 'application/json' }
-		});
+		let response;
+		try {
+			response = await load(target.toString());
+		} catch (error) {
+			const gone = /ECONNREFUSED|EHOSTUNREACH|ENETUNREACH|ETIMEDOUT|EHOSTDOWN/.test(String(error.code || error.message));
+			const local = target.hostname === '127.0.0.1' || target.hostname === 'localhost' || target.hostname === '::1';
+			if (!gone || local) throw error;
+			target.hostname = '127.0.0.1';
+			logger.warn('fetchItems retry via localhost: ' + target.toString());
+			response = await load(target.toString());
+		}
 		res.status(response.status).send(response.data);
 	} catch (error) {
 		logger.error('fetchItems failed: ' + error);

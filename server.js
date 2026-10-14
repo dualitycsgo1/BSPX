@@ -71,6 +71,7 @@ if (!configfileref) {
 
 const spx = require('./utils/spx_server_functions.js');
 const logger = require('./utils/logger.js');
+const layerNames = require('./utils/spx_layernames.js');
 
 // STATICS
 app.use(express.static(path.join(__dirname,('static'))))
@@ -463,7 +464,8 @@ app.engine('handlebars', exphbs.engine({
         let cfgSrv = currentLayer || '-';
         let sel = "";
         if (curSrv==cfgSrv){ sel="selected" }
-        html += '<option value="' + curSrv + '" ' + sel + '>' + curSrv + '</option>';
+        const layerText = layerNames.label(curSrv).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        html += '<option value="' + curSrv + '" ' + sel + '>' + layerText + '</option>';
       });
       return html
     },

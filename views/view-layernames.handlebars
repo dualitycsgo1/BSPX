@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+{{>copyright }}
+
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPX | Layernavne</title>
+  <link rel="icon" type="image/png" href="/img/spx-gc.ico">
+  <link rel="stylesheet" type="text/css" href="/css/spx_fonts.css">
+  <link rel="stylesheet" type="text/css" href="/css/spx_layout.css">
+  <link rel="stylesheet" type="text/css" href="/css/spx_forms.css">
+  <link rel="stylesheet" type="text/css" href="/css/spx_colors.css">
+  <script src="/js/fontawesome.all.min.js"></script>
+</head>
+<body class="bg_body">
+  <div class="wrapper">
+    <div class="header">
+      {{>header page="home"}}
+    </div>
+    <div class="content">
+      <div class="centerColumn pM wrapper">
+        <div class="content pM scroller">
+          {{#if message}}<div class="message">{{message}}</div>{{/if}}
+          {{#if error}}<div class="messagerror">{{error}}</div>{{/if}}
+          <table class="wide" border="0">
+            <tr>
+              <td class="vmid tableheaderText">Layernavne</td>
+              <td class="vmid aright"><a href="/">Tilbage</a></td>
+            </tr>
+          </table>
+          <hr>
+          <p class="spxInfotext">Giv layers et navn. I projektindstillinger vises de som "Layer 3 - Lower Third". Tomt felt viser kun nummeret.</p>
+          <form method="post" action="/gc/layernames">
+            <table class="wide" cellspacing="8">
+              {{#each layers}}
+              <tr>
+                <td style="width:8em">Layer {{layer}}</td>
+                <td><input class="wide" name="layer{{layer}}" value="{{name}}" maxlength="60" placeholder="Navn"></td>
+              </tr>
+              {{/each}}
+            </table>
+            <button class="btn bg_green" type="submit">Gem</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {{>footer}}
+  </div>
+</body>
+</html>

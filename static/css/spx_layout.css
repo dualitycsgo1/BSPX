@@ -297,8 +297,8 @@ td.aright{
 }
 
 #logo {
-    /* width: 2em; *//*50px;*/
-    width: clamp(1.0rem, 2em, 2.0rem);
+    width: auto;
+    height: 2.6rem;
     margin:0;
     opacity:1;
 }

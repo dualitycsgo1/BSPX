@@ -1,5 +1,7 @@
 # Editor buttons and live dropdowns
 
+The full contract for the proxy, the dropdown JSON and the two addresses is in [proxy.md](proxy.md). This page is the field reference.
+
 These fields belong in the template definition (`DataFields` in the show `profile.json`). They are not part of the HTML graphic. A button never plays or stops the graphic. The vMix browser source must be the SPX renderer (`/renderer`) on the same origin as the templates.
 
 Open the controller again after changing the template. New buttons are shown on existing rundown items. Items do not have to be deleted and added again.

@@ -1,43 +1,43 @@
-# Proxy-filer
+# Proxy og dropdowns
 
-En proxy er et lille Python-program, som grafikken henter data fra. BSPX starter og stopper den fra **Proxyer** i menuen. Følg reglerne herunder, så filen bliver fundet, kan skifte port, og kan nås fra vMix.
+En proxy er et Python-program, som BSPX starter fra **Proxyer**. Controllerens dropdowns henter deres valg gennem den. Grafikken i vMix kan kalde den samme proxy. Byg filen og svaret som beskrevet her, så begge dele virker uden særtilfælde.
 
-## Hvor filen skal ligge
+## 1. Filen
 
-Én af disse to steder:
+Læg den ét af disse steder:
 
 - `ASSETS/templates/<projekt>/proxy.py`
 - `proxies/<projekt>/proxy.py`
 
-Filnavnet skal indeholde ordet `proxy`. `proxy.py` og `DBUproxy.py` bliver fundet. `server.py` bliver ikke.
+Filnavnet skal indeholde ordet `proxy`. `server.py` bliver ikke fundet. Kun én proxy pr. mappe. To filer i samme mappe, hvor det ene navn indeholder det andet (`proxy.py` inde i `DBUproxy.py`), får BSPX til at tro at begge kører.
 
-Læg kun én proxy i hver mappe. To filer i samme mappe, hvor det ene navn indeholder det andet (`proxy.py` inde i `DBUproxy.py`), får BSPX til at tro, at begge kører, selv om det kun er den ene.
+Regler:
 
-## Regler der altid skal holde
-
-1. Programmet skal blive ved med at køre. Det må ikke hente noget én gang og så slutte.
-2. Det skal lytte på `0.0.0.0`, ikke på `127.0.0.1`. Ellers kan vMix på en anden PC ikke nå det.
-3. Porten skal stå som `port = 5050` med et tal. Knappen **GEM** leder kun efter det, efter `("0.0.0.0", 5050)`, eller efter `.listen(5050)`. Andre måder bliver ikke ændret.
-4. Hver proxy har sin egen port. 8080 er BSPX. 8000 er Companion. Brug ikke dem.
-5. Svar med JSON og denne header: `Access-Control-Allow-Origin: *`. Uden den bliver kaldet afvist i vMix-browseren.
-6. Brug kun Python-standardbiblioteket, eller pakker der allerede er installeret på Pi'en. BSPX kører filen med `python3`, uden et virtuelt miljø.
-7. Skriv ikke Pi'ens IP-adresse i filen. Adressen skifter. Lyt på `0.0.0.0`.
-8. Lav ikke dit eget baggrundsprogram (`fork`, `nohup`, systemd). BSPX skal eje processen, ellers kan **Stop** ikke slukke den.
-
-## Skabelon
-
-Gem den som `ASSETS/templates/<projekt>/proxy.py` og ret porten, så den ikke støder sammen med en anden proxy.
+1. Programmet skal blive ved med at køre. Det må ikke hente noget én gang og slutte.
+2. Lyt på `0.0.0.0`. `127.0.0.1` kan kun nås fra Pi'en, ikke fra vMix.
+3. Porten skal stå som `port = 5050` med et tal. **GEM** leder kun efter det, efter `("0.0.0.0", 5050)`, eller efter `.listen(5050)`.
+4. Egen port pr. proxy. 8080 er BSPX. 8000 er Companion.
+5. Svar med JSON og `Access-Control-Allow-Origin: *`. Uden den bliver kaldet afvist i vMix.
+6. Brug kun Pythons standardbibliotek, eller pakker der allerede er installeret på Pi'en. BSPX kører `python3 filen.py` uden et virtuelt miljø.
+7. Skriv ikke Pi'ens IP i filen. Adressen skifter.
+8. Start den ikke selv i baggrunden. Så kan **Stop** ikke slukke den.
 
 ```python
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+from urllib.parse import urlparse, parse_qs
 
 HOST = "0.0.0.0"
 port = 5050
 
+def matches_for(query):
+    # Byt dette ud med det rigtige opslag.
+    # Returner altid en liste i formatet længere nede.
+    return []
+
 class Handler(BaseHTTPRequestHandler):
     def _send(self, code, payload):
-        body = json.dumps(payload).encode("utf-8")
+        body = b"" if code == 204 else json.dumps(payload).encode("utf-8")
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -46,13 +46,17 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
-        self.wfile.write(body)
+        if body:
+            self.wfile.write(body)
 
     def do_OPTIONS(self):
-        self._send(204, {})
+        self._send(204, None)
 
     def do_GET(self):
-        self._send(200, {"ok": True})
+        parsed = urlparse(self.path)
+        query = {key: values[0] for key, values in parse_qs(parsed.query).items()}
+        rows = matches_for(query)
+        self._send(200, rows)
 
     def log_message(self, fmt, *args):
         print("%s - %s" % (self.address_string(), fmt % args))
@@ -61,26 +65,163 @@ if __name__ == "__main__":
     ThreadingHTTPServer((HOST, port), Handler).serve_forever()
 ```
 
-`HOST = "0.0.0.0"` gør, at siden viser **netværket**. `port = 5050` er det eneste sted, porten må stå som et tal. Brug variablen `port` alle andre steder.
+`HOST = "0.0.0.0"` gør, at siden viser **netværket**. `port = 5050` er det eneste sted, porten står som et tal.
 
-## Sådan kalder grafikken den
+## 2. To adresser
 
-Controlleren henter `itemsUrl` fra Pi'en selv. Den adresse skal være:
+Controlleren og vMix er ikke den samme maskine.
 
-```text
-http://127.0.0.1:5050/api/...
+| Hvem kalder | Adresse | Hvorfor |
+| --- | --- | --- |
+| Dropdown i controlleren (`itemsUrl`) | `http://127.0.0.1:5050/...` | BSPX på Pi'en henter listen. `127.0.0.1` er Pi'en. |
+| Grafikken i vMix | `http://piserver.local:5050/...` | Browseren kører på vMix-pc'en. `127.0.0.1` dér er pc'en, ikke Pi'en. |
+
+Skriv aldrig `192.168.x.x` i templaten. Den dør, når Pi'en får en ny IP.
+
+`{feltnavn}` i `itemsUrl` bliver erstattet med feltets værdi, og værdien bliver URL-kodet. Brug det til et id eller et rundenummer, ikke til en hel adresse. `http://127.0.0.1:5050` i et felt bliver til `http%3A%2F%2F127.0.0.1%3A5050` og virker ikke.
+
+## 3. Det svar dropdownen forstår
+
+Controlleren kalder ikke proxyen direkte. Den beder BSPX om at hente `itemsUrl`. Svaret skal være JSON.
+
+Enten en liste:
+
+```json
+[
+  {
+    "id": "6ac7caf226d5d8faf0141178",
+    "round": 6,
+    "status": "completed",
+    "homePlayer": { "id": "abc", "name": "MahdiFC" },
+    "awayPlayer": { "id": "def", "name": "Nimand_95V" }
+  }
+]
 ```
 
-`127.0.0.1` er Pi'en, fordi det er BSPX der henter listen. Den adresse virker stadig, når Pi'en får en ny IP.
+Eller et objekt, hvor listen ligger i `matches`, `data`, `items`, `results` eller `docs`. Andre nøgler, for eksempel `games`, bliver afvist, og menuen viser **Kunne ikke hente kampe**.
 
-vMix kører på en anden PC. Et kald inde i selve grafikken skal derfor være:
+Hver række skal have `id`, `_id` eller `matchId`. Uden id bliver rækken sprunget over.
+
+Teksten i menuen bygger BSPX selv. Proxyen skal ikke sende den.
 
 ```text
-http://piserver.local:5050/api/...
+R6 · MahdiFC vs Nimand_95V · spillet
 ```
 
-Skriv aldrig `192.168.x.x` ind i templaten. Den adresse dør, næste gang routeren giver Pi'en en ny IP.
+| Del | Hvor den kommer fra |
+| --- | --- |
+| Runde | `round` eller `roundNumber`. Højest runde først. |
+| Hjemme | `homePlayer.name`, ellers `displayName`, `username`, `home.name`, `home` som tekst, eller `homeName`. Mangler den, står der **afventer**. |
+| Ude | Samme, med `awayPlayer` / `away` / `awayName`. |
+| Status | `completed` = spillet, `scheduled` = planlagt, `pending` = afventer, `extract-incomplete` = udtræk. Alt andet vises som det står. |
 
-## Når den ikke starter
+Spring ikke `completed` over. Der er intet loft under 200. BSPX tilføjer selv `limit=200`, hvis adressen ikke allerede har `limit`, `per_page` eller `pageSize`. Er svaret et objekt med `next`, `pages` eller `total`, hentes de næste sider, højst 10. En ren liste bliver ikke bladret i. Lever alt i første svar.
 
-Loggen ligger i `LOG/proxies/`. Filnavnet er stien med skråstreger byttet ud med `_`. Den sidste linje vises også i proxy-listen, når status er stoppet.
+Sorteringen klarer BSPX: runde faldende, derefter hjemmeholdets navn. Det valgte id bliver stående, hvis det findes i det nye svar. Findes det ikke, beholdes den gamle værdi. Fejler kaldet, bliver de gamle valg stående.
+
+**Update** og **Play** sender det valgte id, ikke teksten.
+
+Et andet spil end FIFA skal stadig levere denne form. Omskriv i proxyen. Dropdownen har ikke et andet format.
+
+## 4. Felterne i templaten
+
+Felterne står i template-definitionen, ikke i HTML-grafikken. Åbn controlleren igen efter en ændring. Eksisterende punkter i rundownet får de nye felter. De skal ikke slettes og tilføjes igen.
+
+```json
+{
+  "field": "round",
+  "ftype": "dropdown",
+  "title": "Runde",
+  "value": "6",
+  "items": [{ "text": "Runde 6", "value": "6" }]
+}
+```
+
+```json
+{
+  "field": "match",
+  "ftype": "dropdown",
+  "title": "Opgør",
+  "value": "",
+  "itemsUrl": "http://127.0.0.1:5050/api/matches?round={round}&status={status}"
+}
+```
+
+`{round}` og `{status}` er feltnavne i samme punkt. Listen hentes, når editoren åbnes, når et felt i adressen ændres, og når en knap med `refresh` trykkes.
+
+```json
+{
+  "field": "pull",
+  "ftype": "button",
+  "title": "Hent kampe",
+  "refresh": "match"
+}
+```
+
+`refresh` er feltnavnet på dropdownen. Knappen spiller ikke grafikken ud eller ind.
+
+Proxyen læser `round` og `status` fra query-strengen og returnerer kun de rækker. `status=all` eller tom `status` betyder alle.
+
+## 5. Skriv til andre grafikker
+
+Knappen skriver kun, når der trykkes på den. Save, Update og Play skriver ikke. Grafikken behøver ikke være på luft. Render-vinduet skal være åbent.
+
+```json
+{
+  "field": "publish",
+  "ftype": "button",
+  "title": "Skriv til Global",
+  "globalKey": "fcc-live-pair",
+  "globalFrom": "match",
+  "globalMap": {
+    "p1": "homePlayer.id",
+    "p2": "awayPlayer.id",
+    "match": "id"
+  }
+}
+```
+
+`globalKey` er nøglen. Brug en ny nøgle pr. projekt. `globalFrom` er dropdownen. Den valgte id slås op i det sidste svar fra `itemsUrl`. `globalMap` kopierer felter fra den række. `homePlayer.id` læser den egenskab. Mangler `id`, bruges `_id`, `playerId`, `userId` eller `uuid`. `{feltnavn}` læser et andet felt i punktet. `now` er tidspunktet. `ts` sættes altid til et nyt `Date.now()`.
+
+```json
+{"p1":"<spiller-id>","p2":"<spiller-id>","match":"<kamp-id>","ts":1710000000000}
+```
+
+Uden `globalMap` gemmes punktets felter plus `ts`.
+
+Grafikken læser på samme origin som templaten. Tjek i render-vinduets konsol, ikke i controllerens.
+
+```javascript
+function readPair() {
+  try { return JSON.parse(localStorage.getItem('fcc-live-pair') || 'null'); }
+  catch (e) { return null; }
+}
+
+function apply(payload) {
+  if (!payload || !payload.ts) return;
+  // payload.p1, payload.p2, payload.match
+}
+
+window.addEventListener('storage', function (event) {
+  if (event.key === 'fcc-live-pair' && event.newValue) apply(JSON.parse(event.newValue));
+});
+
+window.addEventListener('message', function (event) {
+  if (event.data && event.data.spxGlobalKey === 'fcc-live-pair') apply(event.data.spxGlobal);
+});
+
+apply(readPair());
+```
+
+## 6. Når det fejler
+
+| Det man ser | Årsag |
+| --- | --- |
+| Filen er ikke i **Proxyer** | Navnet indeholder ikke `proxy`, eller den ligger et andet sted. |
+| **kun denne maskine** | Filen lytter på `127.0.0.1`. Skift til `0.0.0.0`. |
+| **Kunne ikke hente kampe** | Adressen svarer ikke, eller JSON ikke er en liste i de tilladte nøgler. |
+| Menuen mangler kampe | Proxyen filtrerer dem fra, eller de har intet `id`. |
+| vMix får tomt svar | Grafikken kalder `127.0.0.1` eller en gammel IP. Brug `piserver.local`. |
+| Global rammer ikke grafikken | Render-vinduet er lukket, eller grafikken lytter på en anden nøgle. |
+
+Loggen ligger i `LOG/proxies/`. Filnavnet er stien med skråstreger byttet til `_`.

@@ -226,6 +226,11 @@
                   <button onmouseover="tip('{{lang 'hover.navishows'}}');" class="spxformtext btn spxFlexItem bg_orange ripple" onclick="start();">{{lang 'button.launch'}}</button>
                   <button onmouseover="tip('{{lang 'hover.config'}}');" class="spxformtext btn spxFlexItem bg_grey15 ripple" onclick="appconfig()"><i class="fas fa-wrench"></i>&nbsp;{{lang 'button.config'}}</button>
                   <button onmouseover="tip('Start og stop proxyer');" class="spxformtext btn spxFlexItem bg_grey15 ripple" onclick="document.location='/proxies'">Proxyer</button>
+                  {{#if managedInstance}}
+                  <button onmouseover="tip('Tilbage til serveren der styrer instanserne');" class="spxformtext btn spxFlexItem bg_grey15 ripple" onclick="document.location='{{managerUrl}}'">Hovedserver</button>
+                  {{else}}
+                  <button onmouseover="tip('Start en ekstra SPX til et andet projekt');" class="spxformtext btn spxFlexItem bg_grey15 ripple" onclick="document.location='/instances'">Instanser</button>
+                  {{/if}}
                   <button onmouseover="tip('Giv layers navne');" class="spxformtext btn spxFlexItem bg_grey15 ripple" onclick="document.location='/layernames'">Layernavne</button>
                   <button onmouseover="tip('{{lang 'hover.docs'}}');" class="spxformtext btn spxFlexItem bg_blue ripple" onclick="help('/')">{{lang 'button.help'}}</button>
                   <button onmouseover="tip('spxgraphics.com');" class="spxformtext btn spxFlexItem bg_blue ripple" onclick="website()">website</button>

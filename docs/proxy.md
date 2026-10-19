@@ -102,7 +102,18 @@ Eller et objekt, hvor listen ligger i `matches`, `data`, `items`, `results` elle
 
 Hver række skal have `id`, `_id` eller `matchId`. Uden id bliver rækken sprunget over.
 
-Teksten i menuen bygger BSPX selv. Proxyen skal ikke sende den.
+Proxyen må også sende færdige valg. Så bruger BSPX teksten, som den er, og sorterer ikke om:
+
+```json
+[
+  { "text": "10:00  FUT Esports vs TYLOO", "value": "seed-1" },
+  { "text": "13:00  MOUZ vs Team Liquid", "value": "seed-4" }
+]
+```
+
+`text` og `value` skal begge være med. En liste, der kun har `id` og holdnavne, bliver stadig bygget om til `R6 · hold vs hold · status`.
+
+Teksten i menuen bygger BSPX selv, når svaret ikke allerede har `text` og `value`.
 
 ```text
 R6 · MahdiFC vs Nimand_95V · spillet
@@ -158,7 +169,7 @@ Felterne står i template-definitionen, ikke i HTML-grafikken. Åbn controlleren
 }
 ```
 
-`refresh` er feltnavnet på dropdownen. Knappen spiller ikke grafikken ud eller ind.
+`refresh` er feltnavnet på dropdownen. Flere felter adskilles med komma: `"refresh": "m1,m2,m3,m4"`. Knappen spiller ikke grafikken ud eller ind.
 
 Proxyen læser `round` og `status` fra query-strengen og returnerer kun de rækker. `status=all` eller tom `status` betyder alle.
 

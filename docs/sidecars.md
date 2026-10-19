@@ -1,6 +1,7 @@
 # Project helpers (sidecars)
 
-A rundown can depend on a small program, such as a Python proxy. BSPX does not start that program by itself. The project ships a `*.sidecar` file next to it, and one command turns every sidecar into a systemd service.
+For a Python proxy that should be started and stopped from the BSPX menu, follow [proxy.md](proxy.md). That is the normal way. A sidecar is only for a program that must start at boot even when nobody has opened BSPX.
+
 
 `ASSETS/templates/eafc/eafc.sidecar`:
 

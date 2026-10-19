@@ -2228,10 +2228,13 @@ function fccMatchChoices(list) {
     if (!Array.isArray(list)) return null;
     var choices = list.map(function (match) {
         if (!match || typeof match !== 'object') return null;
+        if (match.text != null && match.value != null) {
+            return { value: String(match.value), text: String(match.text), ready: true };
+        }
         var id = fccMatchId(match);
         if (!id) return null;
-        var home = fccPlayerName(match.homePlayer) || fccPlayerName(match.home) || match.homeName || 'afventer';
-        var away = fccPlayerName(match.awayPlayer) || fccPlayerName(match.away) || match.awayName || 'afventer';
+        var home = fccPlayerName(match.homePlayer) || fccPlayerName(match.home) || match.homeName || match.team1Name || fccPlayerName(match.team1) || 'afventer';
+        var away = fccPlayerName(match.awayPlayer) || fccPlayerName(match.away) || match.awayName || match.team2Name || fccPlayerName(match.team2) || 'afventer';
         return {
             value: id,
             round: fccMatchRound(match),
@@ -2240,6 +2243,18 @@ function fccMatchChoices(list) {
             status: fccMatchStatus(match.status)
         };
     }).filter(Boolean);
+    var ready = choices.filter(function (choice) { return choice.ready; });
+    if (ready.length === choices.length) {
+        var seenReady = {};
+        return ready.filter(function (choice) {
+            if (seenReady[choice.value]) return false;
+            seenReady[choice.value] = true;
+            return true;
+        }).map(function (choice) {
+            return { value: choice.value, text: choice.text };
+        });
+    }
+    choices = choices.filter(function (choice) { return !choice.ready; });
     choices.sort(function (a, b) {
         if (a.round !== b.round) return b.round - a.round;
         return String(a.home).localeCompare(String(b.home), 'da', { sensitivity: 'base' });
@@ -2405,13 +2420,20 @@ function refreshDropdownBySelect(select) {
         });
 }
 
+function refreshNamedDropdowns(scope, fieldList) {
+    var names = String(fieldList || '').split(/[,\s]+/).filter(Boolean);
+    var jobs = Promise.resolve();
+    names.forEach(function (field) {
+        var select = scope.querySelector('select[data-update="' + field + '"]');
+        if (select) jobs = jobs.then(function () { return refreshDropdownBySelect(select); });
+    });
+    return jobs;
+}
+
 function refreshDropdownItems(button) {
     if (!button) return;
     var scope = (button.closest && (button.closest('.controller-expanded') || button.closest('.itemrow'))) || document;
-    var field = button.getAttribute('data-spx-refresh');
-    if (!field) return;
-    var select = scope.querySelector('select[data-update="' + field + '"]');
-    if (select) refreshDropdownBySelect(select);
+    refreshNamedDropdowns(scope, button.getAttribute('data-spx-refresh'));
 }
 
 function editorFieldValues(scope) {
@@ -2433,10 +2455,7 @@ function runEditorButton(button) {
     var fcall = (button.getAttribute('data-spx-fcall') || '').trim();
     var hasGlobal = button.getAttribute('data-spx-global-key');
     var jobs = Promise.resolve();
-    if (refresh) {
-        var select = scope.querySelector('select[data-update="' + refresh + '"]');
-        if (select) jobs = jobs.then(function () { return refreshDropdownBySelect(select); });
-    }
+    if (refresh) jobs = jobs.then(function () { return refreshNamedDropdowns(scope, refresh); });
     jobs.then(function () {
         if (callName) {
             if (typeof window[callName] === 'function') {

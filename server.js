@@ -817,6 +817,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 app.use(session({
   secret: 'salainenSalaisuus#007',
+  name: 'spx.sid.' + (config.general.port || 5656),
   resave: false,
   saveUninitialized: false
 }));
@@ -850,7 +851,12 @@ process.on('uncaughtException', function(err) {
 
 
 var server = app.listen(port, '0.0.0.0', (err) => {
-  try { require('./utils/spx_proxies.js').restore(); } catch (proxyError) { console.log('Proxy restore: ' + proxyError.message); }
+  if (process.env.SPX_MANAGED === '1') {
+    console.log('Managed instance on port ' + port + '. Proxies stay on the main server.');
+  } else {
+    try { require('./utils/spx_proxies.js').restore(); } catch (proxyError) { console.log('Proxy restore: ' + proxyError.message); }
+    try { require('./utils/spx_instances.js').restore(); } catch (instanceError) { console.log('Instance restore: ' + instanceError.message); }
+  }
 
   let splash = '  Copyright 2020- SPX Graphics\n\n' +
   `  SPX Solo version .......... ${global.vers}\n` +  

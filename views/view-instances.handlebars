@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+{{>copyright }}
+
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPX | Instanser</title>
+  <link rel="icon" type="image/png" href="/img/spx-gc.ico">
+  <link rel="stylesheet" type="text/css" href="/css/spx_fonts.css">
+  <link rel="stylesheet" type="text/css" href="/css/spx_layout.css">
+  <link rel="stylesheet" type="text/css" href="/css/spx_forms.css">
+  <link rel="stylesheet" type="text/css" href="/css/spx_colors.css">
+  <script src="/js/fontawesome.all.min.js"></script>
+</head>
+<body class="bg_body">
+  <div class="wrapper">
+    <div class="header">
+      {{>header page="home"}}
+    </div>
+    <div class="content">
+      <div class="centerColumn pM wrapper">
+        <div class="content pM scroller">
+          {{#if message}}<div class="message">{{message}}</div>{{/if}}
+          {{#if error}}<div class="messagerror">{{error}}</div>{{/if}}
+          <table class="wide" border="0">
+            <tr>
+              <td class="vmid tableheaderText">Instanser</td>
+              <td class="vmid aright"><a href="/">Tilbage</a></td>
+            </tr>
+          </table>
+          <hr>
+          <p class="spxInfotext">Hver instans er sin egen SPX med egen port og egne rundowns. Skabelonerne deles. Proxyen kører kun på denne server. Åbn sender dig ind i den instans.</p>
+          <table class="wide" cellspacing="8">
+            <tr>
+              <td>Denne server</td>
+              <td>port {{thisPort}}</td>
+              <td>kører</td>
+              <td><a href="/">Arbejd her</a></td>
+              <td></td>
+            </tr>
+            {{#each instances}}
+            <tr>
+              <td>{{id}}</td>
+              <td>port {{port}}</td>
+              <td>{{#if running}}kører{{else}}stoppet{{/if}}</td>
+              <td>
+                {{#if running}}<a href="http://{{../host}}:{{port}}/" target="_blank">Åbn</a>{{else}}—{{/if}}
+              </td>
+              <td>
+                <form method="post" action="/gc/instance" style="display:inline">
+                  <input type="hidden" name="id" value="{{id}}">
+                  {{#if running}}
+                  <input type="hidden" name="command" value="stop">
+                  <button class="btn bg_orange" type="submit">Stop</button>
+                  {{else}}
+                  <input type="hidden" name="command" value="start">
+                  <button class="btn bg_green" type="submit">Start</button>
+                  {{/if}}
+                </form>
+                {{#unless running}}
+                <form method="post" action="/gc/instance" style="display:inline">
+                  <input type="hidden" name="id" value="{{id}}">
+                  <input type="hidden" name="command" value="remove">
+                  <button class="btn bg_grey15" type="submit">Fjern</button>
+                </form>
+                {{/unless}}
+              </td>
+            </tr>
+            {{/each}}
+          </table>
+          <hr>
+          <form method="post" action="/gc/instance">
+            <input type="hidden" name="command" value="create">
+            <input name="name" placeholder="Navn, f.eks. eafc" style="width:14em">
+            <input name="port" placeholder="Port, tom = næste" inputmode="numeric" style="width:10em">
+            <button class="btn bg_green" type="submit">Opret</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {{>footer}}
+  </div>
+</body>
+</html>

@@ -22,6 +22,7 @@ const { timeStamp } = require("console");
 const http = require('http');
 const axios = require('axios');
 const proxies = require('../utils/spx_proxies.js');
+const instances = require('../utils/spx_instances.js');
 const layerNames = require('../utils/spx_layernames.js');
 
 // ROOT ROUTES ----------------------------------------------------------------------------------------------
@@ -36,6 +37,7 @@ router.get('/', spxAuth.CheckLogin, cors(), spx.getNotificationsMiddleware, asyn
 
 	let recents = config.general.recents || [] // added in 1.1.0
 	let disableConfigUI = config.general.disableConfigUI || false // added in 1.1.1
+	const managedInstance = process.env.SPX_MANAGED === '1';
 	res.render('view-home', {
 		layout: false,
 		greeting: greeting,
@@ -46,6 +48,8 @@ router.get('/', spxAuth.CheckLogin, cors(), spx.getNotificationsMiddleware, asyn
 		disableConfigUI: disableConfigUI,
 		layers: layerNames.list(),
 		config: config,
+		managedInstance: managedInstance,
+		managerUrl: managedInstance && config.general.managerPort ? ('http://' + req.hostname + ':' + config.general.managerPort + '/') : '',
 		showMessage: req.session.showMessage
 	});
 	req.session.showMessage = null;
@@ -67,6 +71,42 @@ router.get('/proxies', spxAuth.CheckLogin, function (req, res) {
 		message: req.query.message || '',
 		error: req.query.error || ''
 	});
+});
+
+router.get('/instances', spxAuth.CheckLogin, function (req, res) {
+	if (process.env.SPX_MANAGED === '1') {
+		const back = config.general.managerPort ? ('http://' + req.hostname + ':' + config.general.managerPort + '/instances') : '/';
+		res.redirect(back);
+		return;
+	}
+	res.render('view-instances', {
+		layout: false,
+		instances: instances.list(),
+		thisPort: config.general.port,
+		host: req.hostname,
+		message: req.query.message || '',
+		error: req.query.error || ''
+	});
+});
+
+router.post('/gc/instance', spxAuth.CheckLogin, function (req, res) {
+	if (process.env.SPX_MANAGED === '1') {
+		res.status(403).send('Instanser styres fra hovedserveren');
+		return;
+	}
+	try {
+		const command = String(req.body.command || '');
+		const id = String(req.body.id || '');
+		let message = '';
+		if (command === 'create') message = instances.create(req.body.name, req.body.port);
+		else if (command === 'start') message = instances.start(id);
+		else if (command === 'stop') message = instances.stop(id);
+		else if (command === 'remove') message = instances.remove(id);
+		else throw new Error('Ukendt kommando');
+		res.redirect('/instances?message=' + encodeURIComponent(message));
+	} catch (error) {
+		res.redirect('/instances?error=' + encodeURIComponent(error.message));
+	}
 });
 
 router.get('/layernames', spxAuth.CheckLogin, function (req, res) {

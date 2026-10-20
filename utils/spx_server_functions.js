@@ -3,6 +3,7 @@
 
 const logger = require('./logger.js');
 const fs = require('fs');
+const writeAtomicJson = require('./spx_atomic_json.js');
 const path = require('path');
 const moment = require('moment');
 const PlayoutCCG = require('./playout_casparCG.js');
@@ -967,34 +968,18 @@ module.exports = {
     return versInt
   }, // versInt
 
-  writeFile: function (filepath, data) {
+  writeFile: async function (filepath, data) {
     try {
-        return new Promise(resolve => {
-          // this.talk('Writing file');
-          // this.playAudio('beep.wav', 'spx.writeFile');
-          data.warning = "Modifications done in the SPX will overwrite this file.";
-          data.copyright = "(c) 2020- SPX Graphics (https://spxgraphics.com)";
-          data.updated = new Date().toISOString();
-          let filedata = JSON.stringify(data, null, 2);
-
-          if (!filepath) {
-            logger.warn('spx.writeFile // No filepath given, not saving anything.');
-            return
-          }
-
-          fs.writeFile(filepath, filedata, 'utf8', function (err) {
-            if (err){
-              console.error('spx.writeFile // Error saving: [' + filepath + ']: ' + err);
-              return 
-            }
-            logger.verbose('spx.writeFile - File written OK: ' + filepath);
-            resolve()
-          });
-          }
-        )
+      if (!filepath) throw new Error('spx.writeFile requires a filepath.');
+      data.warning = "Modifications done in the SPX will overwrite this file.";
+      data.copyright = "(c) 2020- SPX Graphics (https://spxgraphics.com)";
+      data.updated = new Date().toISOString();
+      const filedata = JSON.stringify(data, null, 2);
+      await writeAtomicJson(filepath, filedata);
+      logger.verbose('spx.writeFile - File written OK: ' + filepath);
     } catch (error) {
-      logger.error(error);
-      return 
+      logger.error('spx.writeFile - Error saving [' + filepath + ']: ' + error);
+      throw error;
     }
   }, // writeFile (.json)
 

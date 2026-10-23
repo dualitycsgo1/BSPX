@@ -1,19 +1,29 @@
-name: Atomic JSON regression tests
+name: Rundown regression tests
 
 on:
   push:
     paths:
       - 'utils/spx_atomic_json.js'
       - 'utils/spx_server_functions.js'
+      - 'utils/spx_rundown.js'
       - 'routes/routes-application.js'
-      - 'test/atomic-json.test.cjs'
+      - 'routes/routes-api-v1.js'
+      - 'static/js/spx_gc.js'
+      - 'views/view-controller.handlebars'
+      - 'views/view-controllermini.handlebars'
+      - 'test/*.test.cjs'
       - '.github/workflows/atomic-json.yml'
   pull_request:
     paths:
       - 'utils/spx_atomic_json.js'
       - 'utils/spx_server_functions.js'
+      - 'utils/spx_rundown.js'
       - 'routes/routes-application.js'
-      - 'test/atomic-json.test.cjs'
+      - 'routes/routes-api-v1.js'
+      - 'static/js/spx_gc.js'
+      - 'views/view-controller.handlebars'
+      - 'views/view-controllermini.handlebars'
+      - 'test/*.test.cjs'
       - '.github/workflows/atomic-json.yml'
 
 permissions:
@@ -30,4 +40,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test test/atomic-json.test.cjs
+      - run: node --test

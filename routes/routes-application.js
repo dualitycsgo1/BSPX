@@ -15,9 +15,27 @@ const cfg = require('../utils/spx_getconf.js');
 const PlayoutCCG = require('../utils/playout_casparCG.js');
 const PlayoutWEB = require('../utils/playout_webplayer.js');
 const spxAuth = require('../utils/spx_auth.js');
+const { buildControllerEntries, sortedRundown, wrapRundown, createItemIdAllocator } = require('../utils/spx_rundown.js');
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 const cors = require('cors');
+
+// Rundown edits share a per-file queue with playout persistence. Always write
+// canonical templates; controllerEntries is a derived view, never a saved list.
+async function writeRundown(file, data) {
+	delete data.controllerEntries;
+	await spx.writeFile(file, data);
+	global.rundownData = data;
+}
+
+function controllerMutationFile(req) {
+	return req.body.RundownFile || req.body.datafile || path.join(config.general.dataroot, req.params.foldername, 'data', req.params.filename + '.json');
+}
+
+function playoutMutationFile(req) {
+	if (req.body?.updateRundownItem?.persist) return path.resolve(spx.getDatarootFolder(), req.body.updateRundownItem.project || '', 'data', (req.body.updateRundownItem.rundown || '') + '.json');
+	return req.body?.prepopulated === 'true' ? '' : req.body?.datafile;
+}
 const { timeStamp } = require("console");
 const http = require('http');
 const axios = require('axios');
@@ -904,7 +922,9 @@ router.get('/gc/:foldername/:filename/:mode?', cors(), spxAuth.CheckLogin, async
 
 	let [easterImg, easterTxt] = spx.getEasterEggImage();
 
-	const fileDataAsJSON = await spx.RemoveFilepathKey(GetJsonData(datafile));
+	const fileDataAsJSON = spx.RemoveFilepathKey(await GetJsonData(datafile));
+	if (!fileDataAsJSON || typeof fileDataAsJSON !== 'object') return res.status(404).send('Rundown not found.');
+	delete fileDataAsJSON.controllerEntries;
 
 
 	if (fileDataAsJSON?.ografs) {
@@ -920,7 +940,6 @@ router.get('/gc/:foldername/:filename/:mode?', cors(), spxAuth.CheckLogin, async
 	// but is used in the controller view and is in memory only for now.
 	// Only when something is changed (or played), it will be written to the file.
 
-	global.rundownData = fileDataAsJSON;
 
 	function overlayDropdownMeta(fileData, profile) {
 		if (!fileData || !profile || !Array.isArray(profile.templates)) return;
@@ -949,48 +968,12 @@ router.get('/gc/:foldername/:filename/:mode?', cors(), spxAuth.CheckLogin, async
 		});
 	}
 
-	function buildControllerEntries(fileData) {
-		const templates = Array.isArray(fileData.templates) ? fileData.templates : [];
-		const dividers = (Array.isArray(fileData.dividers) ? fileData.dividers : []).slice().sort((a, b) => {
-			const pos = Number(a.position) - Number(b.position);
-			if (pos !== 0) return pos;
-			return String(a.id).localeCompare(String(b.id));
-		});
-		const entries = [];
-		let d = 0;
-		templates.forEach((template, index) => {
-			while (d < dividers.length && Number(dividers[d].position) <= index) {
-				entries.push({
-					type: 'divider',
-					id: dividers[d].id,
-					title: '',
-					position: dividers[d].position
-				});
-				d += 1;
-			}
-			entries.push(Object.assign({
-				type: 'graphic',
-				templateIndex: index
-			}, template));
-		});
-		while (d < dividers.length) {
-			entries.push({
-				type: 'divider',
-				id: dividers[d].id,
-				title: '',
-				position: dividers[d].position
-			});
-			d += 1;
-		}
-		return entries;
-	}
-
-	fileDataAsJSON.controllerEntries = buildControllerEntries(fileDataAsJSON);
-
 	let showprofile = path.join(config.general.dataroot, req.params.foldername, 'profile.json');
 	const profileDataJSONobj = await GetJsonData(showprofile);
 	overlayDropdownMeta(fileDataAsJSON, profileDataJSONobj);
-	fileDataAsJSON.controllerEntries = buildControllerEntries(fileDataAsJSON);
+	global.rundownData = fileDataAsJSON;
+	const controllerData = { ...fileDataAsJSON, templates: (fileDataAsJSON.templates || []).map(template => ({ ...template, DataFields: template.DataFields || [] })) };
+	controllerData.controllerEntries = buildControllerEntries(controllerData);
 	let profileData = JSON.stringify(profileDataJSONobj);
 	let projectBackground = '';
 
@@ -1026,7 +1009,7 @@ router.get('/gc/:foldername/:filename/:mode?', cors(), spxAuth.CheckLogin, async
 	res.render(getPageTemplate(), {
 		layout: false,
 		globalExtras: config.globalExtras,
-		filedata: fileDataAsJSON,
+		filedata: controllerData,
 		folder: req.params.foldername,
 		datafile: datafile,
 		filebasename: req.params.filename,
@@ -1063,7 +1046,7 @@ router.get('/gc/:foldername/:filename/:mode?', cors(), spxAuth.CheckLogin, async
 }); // get /gc/:foldername/:filename end
 
 
-router.post('/gc/:foldername/:filename/', spxAuth.CheckLogin, async (req, res) => {
+router.post('/gc/:foldername/:filename/', spxAuth.CheckLogin, wrapRundown(controllerMutationFile, async (req, res) => {
 	//
 	// Can handle several commands from the controller page
 	//
@@ -1293,8 +1276,7 @@ router.post('/gc/:foldername/:filename/', spxAuth.CheckLogin, async (req, res) =
 				// saving new items to disk
 				rundownDataJSONobj.project = t_project; // Added in 1.3.2
 				rundownDataJSONobj.rundown = t_rundown; // Added in 1.3.2
-				global.rundownData = rundownDataJSONobj;
-				await SaveRundownDataToDisc(data.RundownFile) // Bug fixed in 1.3.2
+				await writeRundown(data.RundownFile, rundownDataJSONobj);
 				if (fieldsFound) {
 					res.redirect('/gc/' + data.foldername + '/' + data.filebasename + '?msg=Added ' + fieldIndex + ' templates.');
 					break;
@@ -1313,24 +1295,24 @@ router.post('/gc/:foldername/:filename/', spxAuth.CheckLogin, async (req, res) =
 				logger.verbose('Adding all show profile templates to rundown ' + data.listname);
 				showprofile = path.join(config.general.dataroot, data.foldername, 'profile.json');
 				profileDataJSONobj = await GetJsonData(showprofile);
-				let ProfileTemplatesArray = profileDataJSONobj.templates || [];
-
-				ProfileTemplatesArray.forEach((template, index) => {
-					template.itemID = String(Date.now() + index); // generate EPOCH for each template
-				});
-
 				rundownDataJSONobj = await GetJsonData(data.datafile);
+				const nextID = createItemIdAllocator(rundownDataJSONobj.templates || []);
+				const ProfileTemplatesArray = (profileDataJSONobj.templates || []).map(model => {
+					const template = JSON.parse(JSON.stringify(model));
+					return { ...template, itemID: nextID(), onair: 'false', DataFields: template.DataFields || [] };
+				});
 				rundownDataJSONobj.projectFormat = profileDataJSONobj.projectFormat;
 				if (!rundownDataJSONobj.templates) {
 					rundownDataJSONobj.templates = ProfileTemplatesArray;
 				} else {
 					rundownDataJSONobj.templates = rundownDataJSONobj.templates.concat(ProfileTemplatesArray);
 				}
-				await spx.writeFile(data.datafile, rundownDataJSONobj);
-				res.redirect('/gc/' + data.foldername + '/' + data.listname);
+				await writeRundown(data.datafile, rundownDataJSONobj);
+				res.redirect('/gc/' + data.foldername + '/' + data.listname + (ProfileTemplatesArray.length ? '?added=' + encodeURIComponent(ProfileTemplatesArray[0].itemID) : ''));
 				return;
 			} catch (error) {
 				logger.error('addAllItemsToRundown Error while saving file: ', error);
+				return res.status(400).send('Could not add templates. Reload the controller and try again.');
 			}; //file written
 			break;
 
@@ -1340,22 +1322,26 @@ router.post('/gc/:foldername/:filename/', spxAuth.CheckLogin, async (req, res) =
 				logger.verbose('Adding show profile template[' + data.templateindex + '] to rundown ' + data.listname);
 				showprofile = path.join(config.general.dataroot, data.foldername, 'profile.json');
 				profileDataJSONobj = await GetJsonData(showprofile);
-				let TemplateModel = profileDataJSONobj.templates[data.templateindex];
-				TemplateModel.itemID = String(Date.now());  // Generate ID (epoch milliseconds) for this rundown item (from v. 0.9.8 onwards)
+				const modelIndex = Number(data.templateindex);
+				if (!Number.isSafeInteger(modelIndex) || modelIndex < 0 || !profileDataJSONobj.templates?.[modelIndex]) throw Error('Unknown template.');
+				let TemplateModel = JSON.parse(JSON.stringify(profileDataJSONobj.templates[modelIndex]));
 				// This will be used to control UI (play, remove, sort, etc...)
 				rundownDataJSONobj = await GetJsonData(data.datafile);
 				if (!rundownDataJSONobj.templates) {
 					rundownDataJSONobj.templates = [];
 				}
+				TemplateModel.itemID = createItemIdAllocator(rundownDataJSONobj.templates)();
+				TemplateModel.onair = 'false';
+				TemplateModel.DataFields = TemplateModel.DataFields || [];
 				rundownDataJSONobj.templates.push(TemplateModel);
 				rundownDataJSONobj.projectFormat = profileDataJSONobj.projectFormat;
 
-				await spx.writeFile(data.datafile, rundownDataJSONobj);
-				res.redirect('/gc/' + data.foldername + '/' + data.listname);
+				await writeRundown(data.datafile, rundownDataJSONobj);
+				res.redirect('/gc/' + data.foldername + '/' + data.listname + '?added=' + encodeURIComponent(TemplateModel.itemID));
 				return;
 			} catch (error) {
 				logger.error('addItemToRundown Error while saving file: ', error);
-				// console.log('addItemToRundown Error while saving file: ', error);
+				return res.status(400).send('Could not add the template. Reload the controller and try again.');
 			}; //file written
 			break;
 
@@ -1371,7 +1357,7 @@ router.post('/gc/:foldername/:filename/', spxAuth.CheckLogin, async (req, res) =
 					position: Math.max(0, parseInt(data.position, 10) || 0)
 				});
 				rundownDataJSONobj.dividers.sort((a, b) => a.position - b.position);
-				await spx.writeFile(data.datafile, rundownDataJSONobj);
+				await writeRundown(data.datafile, rundownDataJSONobj);
 				res.redirect('/gc/' + data.foldername + '/' + data.listname);
 				return;
 			} catch (error) {
@@ -1383,7 +1369,7 @@ router.post('/gc/:foldername/:filename/', spxAuth.CheckLogin, async (req, res) =
 			try {
 				rundownDataJSONobj = await GetJsonData(data.datafile);
 				rundownDataJSONobj.dividers = (rundownDataJSONobj.dividers || []).filter((divider) => String(divider.id) !== String(data.dividerID));
-				await spx.writeFile(data.datafile, rundownDataJSONobj);
+				await writeRundown(data.datafile, rundownDataJSONobj);
 				res.redirect('/gc/' + data.foldername + '/' + data.listname);
 				return;
 			} catch (error) {
@@ -1410,8 +1396,7 @@ router.post('/gc/:foldername/:filename/', spxAuth.CheckLogin, async (req, res) =
 
 			try {
 				rundownDataJSONobj = await spx.appendProjectFile(rundownDataJSONobj, data.datafile, "from gc/removeItemFromRundown");
-				global.rundownData = rundownDataJSONobj;
-				await spx.writeFile(data.datafile, rundownDataJSONobj);
+				await writeRundown(data.datafile, rundownDataJSONobj);
 				res.status(200).send('Item removed ok.'); // ok 200 AJAX RESPONSE
 				return;
 			} catch (error) {
@@ -1430,6 +1415,8 @@ router.post('/gc/:foldername/:filename/', spxAuth.CheckLogin, async (req, res) =
 
 			logger.verbose('Cloning item [' + data.sourceEpoch + '] to [' + freshID + '] in file [' + data.listname + '].');
 			rundownDataJSONobj = await GetJsonData(data.datafile);
+			if (!(rundownDataJSONobj.templates || []).some(template => String(template.itemID) === String(data.sourceEpoch))) return res.status(409).send('Rundown changed. Reload before duplicating.');
+			if ((rundownDataJSONobj.templates || []).some(template => String(template.itemID) === String(freshID))) return res.status(409).send('Item ID already exists. Reload before duplicating.');
 
 			var NewTemplateArray = [];
 			for (var i = 0; i < rundownDataJSONobj.templates.length; i++) {
@@ -1441,7 +1428,6 @@ router.post('/gc/:foldername/:filename/', spxAuth.CheckLogin, async (req, res) =
 					// console.log('Yes, found ID ' + rundownDataJSONobj.templates[i].itemID + ' which gets duplicated once.');
 					// console.log('Copy', duplicateData);
 					NewTemplateArray.push(duplicateData);
-					global.rundownData.templates.push(duplicateData); // Fixed "duplicate play issue" in 1.1.1
 					duplicated = true;
 				}
 			}
@@ -1449,7 +1435,7 @@ router.post('/gc/:foldername/:filename/', spxAuth.CheckLogin, async (req, res) =
 			// console.log('Saving new data ', rundownDataJSONobj.templates);
 
 			try {
-				await spx.writeFile(data.datafile, rundownDataJSONobj);
+				await writeRundown(data.datafile, rundownDataJSONobj);
 				res.status(200).send('Item duplicated ok.'); // ok 200 AJAX RESPONSE
 				return;
 			} catch (error) {
@@ -1467,9 +1453,9 @@ router.post('/gc/:foldername/:filename/', spxAuth.CheckLogin, async (req, res) =
 			logger.warn('Warning: unknown gc-post command: ' + data.command);
 			break;
 	}
-}); // gc post end
+})); // gc post end
 
-router.post('/gc/playout', spxAuth.CheckLogin, async (req, res) => {
+router.post('/gc/playout', spxAuth.CheckLogin, wrapRundown(playoutMutationFile, async (req, res) => {
 	// Request: data object (command, datafile, templateIndex)
 	// Returns: AJAX response
 	//
@@ -1507,8 +1493,7 @@ router.post('/gc/playout', spxAuth.CheckLogin, async (req, res) => {
 		dataOut.fields = []; // init it with an empty arr as placeholder
 		let RundownData = ""  // file JSON
 		let preventSave = false;
-		let forceDiskRead = req.body.forceFileReadOnce ? true : false; // Added in 1.3.0. Read Release Notes!
-		let cacheRundownData = null; // Added in 1.3.0
+		const forceDiskRead = Boolean(req.body.forceFileReadOnce); // Also identifies API auto-out behavior.
 		let autoOutTimerID = null; // Added in 1.3.0
 		let itemID = null; // Added in 1.3.2
 		let RundownFile = path.normalize(req.body?.datafile || '') // file reference (in a normal call)
@@ -1542,19 +1527,10 @@ router.post('/gc/playout', spxAuth.CheckLogin, async (req, res) => {
 			itemID = req.body?.epoch || req.body?.updateRundownItem?.itemID || '';
 			logger.verbose('Playout command [' + req.body.command + '] item [' + itemID + '] of [' + RundownFile + '].');
 
-			// Refactored in 1.0.15 to prioritize memory over disk I/O
-			// 1.3.0 added forceDiskRead parameter to use when API call is made.
-			let notifyDataSource = ''
-			if (Object.keys(global.rundownData).length === 0 || forceDiskRead) {
-				if (Object.keys(global.rundownData).length > 0) {
-					cacheRundownData = global.rundownData; // cache it
-				}
-				notifyDataSource = 'from file:'
-				RundownData = await GetJsonData(RundownFile);
-			} else {
-				notifyDataSource = 'from memory:'
-				RundownData = global.rundownData; // use memory only 
-			}
+			// A cached controller may belong to another rundown or predate new rows.
+			const notifyDataSource = 'from file:';
+			RundownData = await GetJsonData(RundownFile);
+			delete RundownData.controllerEntries;
 			let projectFormat = RundownData.projectFormat || 'SPX';
 
 			RundownData.templates.forEach((template, index) => {
@@ -1582,7 +1558,7 @@ router.post('/gc/playout', spxAuth.CheckLogin, async (req, res) => {
 			dataOut.webplayout = ItemData.webplayout;
 			dataOut.out = ItemData.out; // 1.3.0 only used with direct API calls
 			dataOut.dataformat = ItemData.dataformat || 'json'; // Changed to JSON in 1.3.0
-			ItemData.DataFields.forEach(item => {
+			(ItemData.DataFields || []).forEach(item => {
 				// We pass data as custom JSON format and the format is changed
 				// downstream in the playout controller as per renderer's needs.
 				let FieldItem = {};
@@ -1841,14 +1817,8 @@ router.post('/gc/playout', spxAuth.CheckLogin, async (req, res) => {
 				logger.verbose('preventSave enabled, no need to persist to disk.');
 			} else {
 				logger.verbose('Persisting rundown data to disk....');
-				await spx.writeFile(RundownFile, RundownData);
+				await writeRundown(RundownFile, RundownData);
 			}
-		}
-
-		// Added in 1.3.0 / Restore cache (after an API call)
-		if (cacheRundownData) {
-			logger.verbose('Restoring rundown data to memory after an API call.');
-			global.rundownData = cacheRundownData; // restore it
 		}
 
 		// Check if file exists. Function improved in 1.1.3
@@ -1869,7 +1839,7 @@ router.post('/gc/playout', spxAuth.CheckLogin, async (req, res) => {
 		logger.error('ERROR in /gc/playout. ' + error);
 		res.status(500).send('Error in /gc/playout: ' + error)  // error 500 AJAX RESPONSE
 	};
-}); // playout ended
+})); // playout ended
 
 
 router.post('/gc/playaudio', spxAuth.CheckLogin, (req, res) => {
@@ -1930,62 +1900,24 @@ router.post('/gc/clearPlayouts', spxAuth.CheckLogin, async (req, res) => {
 }); // clearPlayouts ended
 
 
-router.post('/gc/sortTemplates', spxAuth.CheckLogin, async (req, res) => {
+router.post('/gc/sortTemplates', spxAuth.CheckLogin, wrapRundown(req => req.body.rundownfile, async (req, res) => {
 	// Handles modification changes of a template in the rundown.
 	// Request: data with newTemplateOrderArr -array (of epochs)
 	// Returns: AJAX response
 	logger.verbose('Sorting templates in ' + req.body.rundownfile + ' to ' + req.body.newTemplateOrderArr);
 	try {
 		let RundownFile = path.normalize(req.body.rundownfile);
-		let RundownData = await GetJsonData(RundownFile);
-		if (Array.isArray(req.body.controllerOrder)) {
-			let templateByID = new Map((RundownData.templates || []).map((template) => [String(template.itemID), template]));
-			let dividerByID = new Map((RundownData.dividers || []).map((divider) => [String(divider.id), divider]));
-			let templates = [];
-			let dividers = [];
-			let graphicPosition = 0;
-
-			req.body.controllerOrder.forEach((entry) => {
-				if (entry.type === 'graphic' && templateByID.has(String(entry.id))) {
-					templates.push(templateByID.get(String(entry.id)));
-					graphicPosition += 1;
-				}
-				if (entry.type === 'divider' && dividerByID.has(String(entry.id))) {
-					let divider = dividerByID.get(String(entry.id));
-					divider.position = graphicPosition;
-					dividers.push(divider);
-				}
-			});
-
-			RundownData.templates = templates;
-			RundownData.dividers = dividers;
-			RundownData.updated = new Date().toISOString();
-			await spx.writeFile(RundownFile, RundownData);
-			global.rundownData = RundownData;
-			res.status(200).send('Rundown sorting saved.');
-			return;
-		}
-		let TempArr = [];
-		req.body.newTemplateOrderArr.forEach(function (sortedID, sortIndex) {
-			RundownData.templates.forEach(function (template, templateIndex) {
-				if (template.itemID === sortedID) {
-					logger.debug("Sorting. Saving to position " + templateIndex + " itemID " + sortedID);
-					TempArr.push(template);
-				}
-			})
-
-		});
-		RundownData.templates = TempArr;
+		const RundownData = sortedRundown(await GetJsonData(RundownFile), req.body);
 		RundownData.updated = new Date().toISOString();
-		await spx.writeFile(RundownFile, RundownData);
-		global.rundownData = RundownData; // Added in 1.1.2
+		await writeRundown(RundownFile, RundownData);
 		res.status(200).send('Rundown sorting saved.'); // ok 200 AJAX RESPONSE
 	}
 	catch (error) {
+		if (error.status === 409) return res.status(409).send(error.message);
 		logger.error('Error in /gc/sortTemplates while sorting data. [' + error + '].');
 		res.status(500).send('Server error in /gc/sortTemplates [' + error + '].')  // error 500 AJAX RESPONSE
 	};
-}); // sortTemplates ended
+})); // sortTemplates ended
 
 
 router.post('/gc/duplicateRundown', spxAuth.CheckLogin, async (req, res) => {
@@ -2055,7 +1987,7 @@ router.post('/gc/saveConfigChanges', spxAuth.CheckLogin, async (req, res) => {
 }); // saveConfigChanges ended
 
 
-router.post('/gc/saveItemChanges', spxAuth.CheckLogin, async (req, res) => {
+router.post('/gc/saveItemChanges', spxAuth.CheckLogin, wrapRundown(req => req.body.rundownfile, async (req, res) => {
 	// Handles modification changes of a template in the rundown.
 	// Request: form data as JSON
 	// Returns: Ajax response
@@ -2083,8 +2015,7 @@ router.post('/gc/saveItemChanges', spxAuth.CheckLogin, async (req, res) => {
 				});
 			}
 		});
-		global.rundownData = RundownData; // push to memory also for next take
-		await spx.writeFile(RundownFile, RundownData);
+		await writeRundown(RundownFile, RundownData);
 		var htmlSnippetForCollapse = spx.generateCollapsedHeadline(DataFieldsForCollapsePreview);
 		let response = ['Item changes saved', htmlSnippetForCollapse]
 		res.status(200).send(response); // ok 200 AJAX RESPONSE
@@ -2094,7 +2025,7 @@ router.post('/gc/saveItemChanges', spxAuth.CheckLogin, async (req, res) => {
 		logger.error(errmsg);
 		res.status(500).send(errmsg)  // error 500 AJAX RESPONSE
 	};
-}); // saveItemChanges ended
+})); // saveItemChanges ended
 
 
 router.post('/gc/writeGlobal', spxAuth.CheckLogin, async (req, res) => {

@@ -26,6 +26,8 @@
     <script src="/js/spx_rendererUtils.js" type="module"></script> <!-- added in 1.3.3 RC-->
     <script src="/js/ograf_functions.js"></script>
     <script src="/js/spx_gc.js"></script>
+    <script src="/js/pgl_fullscreen_transitions.js"></script>
+    <script src="/js/eafc_fullscreen_bridge.js"></script>
     <title>SPX Renderer</title>
     <style>
         * {
@@ -425,6 +427,18 @@
 
         socket.on('SPXMessage2Client', function (data) {
             incomingData = data;
+            if (window.EAFCFullscreenBridge?.handle(data, {
+                templateRoot: TemplateRoot,
+                preview: isPreviewMode(),
+                local: isLocalRenderer(),
+                validateLayer: validateLayerNro
+            })) { return; }
+            if (window.PGLFullscreenTransitions?.handle(data, {
+                templateRoot: TemplateRoot,
+                preview: isPreviewMode(),
+                local: isLocalRenderer(),
+                validateLayer: validateLayerNro
+            })) { return; }
             let LayerNro;
             let projectFormat = ""
             let customCommand = ""

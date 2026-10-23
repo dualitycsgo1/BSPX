@@ -5,12 +5,12 @@
 (function () {
   'use strict';
   const settings={enabled:true,layer:5,sound:true,wipe:true,
-    templateFolders:['pgl-masters','PGL TEST'],
+    templateFolders:['pgl-masters','PGL TEST','PGL'],
     video:'',cover:'', // empty = resolve next to the actual template, including renamed packs
     // Measured from the supplied alpha channel, not a wall-clock delay.
     cutSeconds:1.1,coverStart:62/60,coverEnd:70/60,
     readyTimeoutMs:20000,mediaTimeoutMs:4000,stallTimeoutMs:3000};
-  const names=new Set(['next-match.html','schedule.html','swiss.html','player.html','h2h.html','team.html']);
+  const names=new Set(['next-match.html','schedule.html','swiss.html','player.html','h2h.html','team.html','predictions.html']);
   const query=new URLSearchParams(location.search);
   if(query.get('pglTransitions')==='0')settings.enabled=false;
   if(query.get('pglWipeSound')==='0')settings.sound=false;

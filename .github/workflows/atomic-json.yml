@@ -12,6 +12,12 @@ on:
       - 'views/view-controller.handlebars'
       - 'views/view-controllermini.handlebars'
       - 'test/*.test.cjs'
+      - 'test/test_pi_sync.py'
+      - 'deploy/prepare-pi-sync.py'
+      - 'deploy/pi-sync-manifest.json'
+      - 'static/js/eafc_fullscreen_bridge.js'
+      - 'static/js/pgl_fullscreen_transitions.js'
+      - 'views/view-renderer.handlebars'
       - '.github/workflows/atomic-json.yml'
   pull_request:
     paths:
@@ -24,6 +30,12 @@ on:
       - 'views/view-controller.handlebars'
       - 'views/view-controllermini.handlebars'
       - 'test/*.test.cjs'
+      - 'test/test_pi_sync.py'
+      - 'deploy/prepare-pi-sync.py'
+      - 'deploy/pi-sync-manifest.json'
+      - 'static/js/eafc_fullscreen_bridge.js'
+      - 'static/js/pgl_fullscreen_transitions.js'
+      - 'views/view-renderer.handlebars'
       - '.github/workflows/atomic-json.yml'
 
 permissions:
@@ -40,4 +52,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - run: node --test
+      - run: python -m unittest discover -s test -p test_pi_sync.py -v

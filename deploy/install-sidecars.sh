@@ -43,6 +43,7 @@ while IFS= read -r spec; do
 Description=BSPX sidecar ${name}
 After=network-online.target
 Wants=network-online.target
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -50,7 +51,7 @@ User=admin
 Group=admin
 WorkingDirectory=${dir}
 ExecStart=/bin/bash -lc ${execcmd@Q}
-Restart=on-failure
+Restart=always
 RestartSec=3
 
 [Install]

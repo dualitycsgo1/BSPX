@@ -53,7 +53,7 @@
                 </form>
               </td>
               <td>{{#if bind}}{{bind}}{{else}}—{{/if}}</td>
-              <td>{{#if running}}kører{{#if systemd}} ({{systemd}}){{/if}}{{else}}stoppet{{#if note}}<div class="spxInfotext">{{note}}</div>{{/if}}{{/if}}</td>
+              <td>{{#if running}}kører{{#if systemd}} ({{systemd}}){{/if}}{{else}}stoppet{{#if note}}<div class="spxInfotext">{{note}}</div>{{/if}}{{/if}}{{#if supervised}}<div class="spxInfotext">Automatisk genstart</div>{{/if}}</td>
               <td>
                 <form method="post" action="/gc/proxy" style="display:inline">
                   <input type="hidden" name="id" value="{{id}}">

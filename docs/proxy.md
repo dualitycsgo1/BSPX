@@ -1,5 +1,8 @@
 # Proxy og dropdowns
 
+De tre produktionsproxyer startes og overvåges nu automatisk sammen med
+BSPX-hovedserveren. Se [automatisk genstart og aktivering](proxy-supervision.md).
+
 En proxy er et Python-program, som BSPX starter fra **Proxyer**. Controllerens dropdowns henter deres valg gennem den. Grafikken i vMix kan kalde den samme proxy. Byg filen og svaret som beskrevet her, så begge dele virker uden særtilfælde.
 
 ## 1. Filen
@@ -9,7 +12,8 @@ Læg den ét af disse steder:
 - `ASSETS/templates/<projekt>/proxy.py`
 - `proxies/<projekt>/proxy.py`
 
-Filnavnet skal indeholde ordet `proxy`. `server.py` bliver ikke fundet. Kun én proxy pr. mappe. To filer i samme mappe, hvor det ene navn indeholder det andet (`proxy.py` inde i `DBUproxy.py`), får BSPX til at tro at begge kører.
+Filnavnet skal indeholde ordet `proxy`. `server.py` bliver ikke fundet. Flere
+proxyer kan ligge i samme mappe; processen genkendes på den præcise scriptsti.
 
 Regler:
 

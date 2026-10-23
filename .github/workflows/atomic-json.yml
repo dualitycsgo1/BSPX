@@ -6,6 +6,11 @@ on:
       - 'utils/spx_atomic_json.js'
       - 'utils/spx_server_functions.js'
       - 'utils/spx_rundown.js'
+      - 'utils/spx_prox*.js'
+      - 'deploy/bspx.service'
+      - 'deploy/install-sidecars.sh'
+      - 'deploy/enable-proxy-supervision.sh'
+      - 'views/view-proxies.handlebars'
       - 'routes/routes-application.js'
       - 'routes/routes-api-v1.js'
       - 'static/js/spx_gc.js'
@@ -24,6 +29,11 @@ on:
       - 'utils/spx_atomic_json.js'
       - 'utils/spx_server_functions.js'
       - 'utils/spx_rundown.js'
+      - 'utils/spx_prox*.js'
+      - 'deploy/bspx.service'
+      - 'deploy/install-sidecars.sh'
+      - 'deploy/enable-proxy-supervision.sh'
+      - 'views/view-proxies.handlebars'
       - 'routes/routes-application.js'
       - 'routes/routes-api-v1.js'
       - 'static/js/spx_gc.js'
@@ -57,3 +67,7 @@ jobs:
           python-version: '3.11'
       - run: node --test
       - run: python -m unittest discover -s test -p test_pi_sync.py -v
+      - if: runner.os == 'Linux'
+        run: |
+          bash -n deploy/enable-proxy-supervision.sh
+          bash -n deploy/install-sidecars.sh

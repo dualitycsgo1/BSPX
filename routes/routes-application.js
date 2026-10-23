@@ -83,6 +83,9 @@ router.get('/fileBrowser', spxAuth.CheckLogin, function (req, res) {
 }); // get /fileBrowser end
 
 router.get('/proxies', spxAuth.CheckLogin, function (req, res) {
+	if (process.env.SPX_MANAGED === '1') {
+		return res.redirect(config.general.managerPort ? ('http://' + req.hostname + ':' + config.general.managerPort + '/proxies') : '/');
+	}
 	res.render('view-proxies', {
 		layout: false,
 		proxies: proxies.list(),
@@ -144,14 +147,15 @@ router.post('/gc/layernames', spxAuth.CheckLogin, function (req, res) {
 	}
 });
 
-router.post('/gc/proxy', spxAuth.CheckLogin, function (req, res) {
+router.post('/gc/proxy', spxAuth.CheckLogin, async function (req, res) {
+	if (process.env.SPX_MANAGED === '1') return res.status(403).send('Proxyer styres fra BSPX-hovedserveren');
 	try {
 		const id = String(req.body.id || '');
 		const command = String(req.body.command || '');
 		let message = '';
-		if (command === 'start') message = proxies.start(id);
-		else if (command === 'stop') message = proxies.stop(id);
-		else if (command === 'port') message = proxies.setPort(id, req.body.port);
+		if (command === 'start') message = await proxies.start(id);
+		else if (command === 'stop') message = await proxies.stop(id);
+		else if (command === 'port') message = await proxies.setPort(id, req.body.port);
 		else throw new Error('Ukendt kommando');
 		res.redirect('/proxies?message=' + encodeURIComponent(message));
 	} catch (error) {

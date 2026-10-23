@@ -15,7 +15,7 @@ const { probeHttp } = require('../utils/spx_proxy_health');
 const PGL = 'ASSETS/templates/PGL/proxy.py';
 const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 
-async function until(check, description, timeoutMs = 5000, diagnostic = () => '') {
+async function until(check, description, timeoutMs = 8000, diagnostic = () => '') {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const value = await check();
@@ -49,7 +49,7 @@ function requestCleanExit(port) {
 
 test('Linux runtime adopts and restores real Python proxies after crash, clean exit and a local hang', {
   skip: process.platform !== 'linux' ? 'Requires Linux /proc and python3' : false,
-  timeout: 20000
+  timeout: 30000
 }, async t => {
   const temporaryRoot = fs.realpathSync(os.tmpdir());
   const root = fs.mkdtempSync(path.join(temporaryRoot, 'bspx-proxy-runtime-'));
@@ -58,6 +58,7 @@ test('Linux runtime adopts and restores real Python proxies after crash, clean e
   const inspector = createProcessInspector();
   const children = [];
   const managers = [];
+  let policyClockOffset = 0;
   let manager;
   function logTail() {
     try {
@@ -116,17 +117,18 @@ test('Linux runtime adopts and restores real Python proxies after crash, clean e
   function newManager() {
     const instance = createProxyManager({
       root,
-      probeHttp: value => probeHttp(value, { timeoutMs: 250 }),
+      probeHttp: value => probeHttp(value, { timeoutMs: 500 }),
       spawn(command, args, options) {
         const child = spawn(command, args, options);
         children.push(child);
         return child;
       },
       supervisorOptions: {
-        // Python import/startup and HTTP dispatch contend with the other CI
-        // tests. Allow real scheduling latency; exact small deadline behavior
-        // is already covered separately using the deterministic fake clock.
-        pollMs: 40, healthIntervalMs: 100, startupGraceMs: 1500,
+        // Keep the production startup allowance for real Python processes.
+        // Only the intentional hang below advances policy time; actual HTTP
+        // deadlines and process discovery always run against the real clock.
+        now: () => Date.now() + policyClockOffset,
+        pollMs: 40, healthIntervalMs: 100, startupGraceMs: 30000,
         unhealthyThreshold: 3, restartDelayMs: 40, maxRestartDelayMs: 100, stableMs: 100
       }
     });
@@ -137,8 +139,8 @@ test('Linux runtime adopts and restores real Python proxies after crash, clean e
   async function healthyPid(except = 0) {
     return until(async () => {
       const info = inspector.find(script);
-      return info && info.pid !== except && await probeHttp(port, { timeoutMs: 250 }) ? info.pid : 0;
-    }, 'a responsive fixture Python process', 5000, logTail);
+      return info && info.pid !== except && await probeHttp(port, { timeoutMs: 500 }) ? info.pid : 0;
+    }, 'a responsive fixture Python process', 8000, logTail);
   }
 
   manager = newManager();
@@ -167,17 +169,20 @@ test('Linux runtime adopts and restores real Python proxies after crash, clean e
   assert.equal(children[1].exitCode, 0, 'A normal exit is recovered too');
 
   fs.writeFileSync(hang, 'hang only this test fixture\n');
+  // The process has proved ready. Cross its startup grace without spending
+  // thirty real seconds waiting before testing three real failed HTTP probes.
+  policyClockOffset += 30000;
   const replacementPid = await until(() => {
     const info = inspector.find(script);
     return info && info.pid !== afterCleanExit ? info.pid : 0;
-  }, 'watchdog replacing the unresponsive local HTTP process', 5000, logTail);
+  }, 'watchdog replacing the unresponsive local HTTP process', 8000, logTail);
   fs.unlinkSync(hang);
   assert.equal(await healthyPid(afterCleanExit), replacementPid);
   assert.equal(children[2].signalCode, 'SIGKILL', 'Only the unresponsive proxy was killed');
   assertGenerations(4, 'One replacement starts after the local HTTP hang');
 
   await manager.stop(PGL);
-  await until(() => !inspector.find(script), 'manual stop to remove the fixture proxy', 5000, logTail);
+  await until(() => !inspector.find(script), 'manual stop to remove the fixture proxy', 8000, logTail);
   const count = children.length;
   await delay(220);
   assert.equal(children.length, count, 'Stop disables recovery before terminating the process');

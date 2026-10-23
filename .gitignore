@@ -1,3 +1,20 @@
 node_modules/
 LOG/
 .DS_Store
+._*
+__pycache__/
+*.pyc
+*.log
+
+# Production machine configuration and operator state stay on the machine.
+/config.json
+/config[0-9]*.json
+/liveconfig.json
+/layer-names.json
+/instances/*.json
+/DATAROOT*/
+/.bspx-sync-backup/
+
+# Locally installed graphics packs (including their private API configuration).
+# Existing tracked demo files are left unchanged by this update.
+/ASSETS/templates/

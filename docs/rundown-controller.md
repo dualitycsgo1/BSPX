@@ -1,5 +1,8 @@
 # Rundown graphics and controller visibility
 
+For the production Pi with local commits, use the [one-time code synchronization](pi-code-sync.md)
+before the next update. Local templates and rundowns remain on the machine.
+
 The controller has no application-level item-count limit. A project's template
 library defines the available graphic types, not the number of instances a
 rundown may contain. The same template may be added repeatedly.

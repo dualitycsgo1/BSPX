@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "capturedUtc": "2026-10-23T16:30:22.6104674Z",
+  "sourceRef": "origin/main",
+  "paths": [
+    ".gitignore",
+    "static/js/eafc_fullscreen_bridge.js",
+    "static/js/pgl_fullscreen_transitions.js",
+    "utils/spx_atomic_json.js",
+    "utils/spx_server_functions.js",
+    "views/view-renderer.handlebars"
+  ],
+  "snapshotHashes": {
+    ".gitignore": "7edd2a37edc7448eb3a590ae9dccc9f01cf082d7338ca5596003bcdc78e11ca9",
+    "static/js/eafc_fullscreen_bridge.js": "68b66ed91e6b139d3b790dbd681a5b0dfd967fc45412a7eae76be047603e2089",
+    "static/js/pgl_fullscreen_transitions.js": "0ffa4f4dbc2fb9804d1280b8bf4391ec751bc1bcb90a09eaf9ad06f3fa9e4709",
+    "utils/spx_atomic_json.js": "bf91b8929e362b6fbed3ade15dd4814e075689bc64641967d3ee2afc2e26cafc",
+    "utils/spx_server_functions.js": "f8d459b27a34fe87c13c832c9f2fbb379d114d20bb789b3fd08daa70b2b0f2e9",
+    "views/view-renderer.handlebars": "1ac81543abf48c82582e38ffa65ebdad354e5fcdb1574d2fc7c631384cd600a1"
+  }
+}

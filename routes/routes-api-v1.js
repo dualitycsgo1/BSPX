@@ -24,6 +24,7 @@ const axios = require('axios')
 const PlayoutCCG = require('../utils/playout_casparCG.js');
 const { query } = require("../utils/logger");
 const spxAuth = require('../utils/spx_auth.js');
+const { wrapRundown } = require('../utils/spx_rundown.js');
 let apiCache = [] // used to cache [undocumented] API calls
 let ack = 'Sent request to SPX server. Acknowledgement is not to be expected.'
 let ack2 = 'Sent request to SPX Controller. Acknowledgement is not to be expected.'
@@ -499,7 +500,7 @@ router.get('/rundown/stopAllLayers', spxAuth.CheckAPIKey, async (req, res) => {
 }); // end stopAllLayers
 
 
-router.get('/changeItemID', async (req, res) => {
+router.get('/changeItemID', wrapRundown(req => req.query.rundownfile, async (req, res) => {
 	// Added in 1.0.15 - undocumented intentionally
 	// ID button in SPX controller uses this API endpoint:
 	// /api/v1/changeItemID?rundownfile=C:/SPX/DATAROOT/PROJECT/data/list.json&ID=0000001&newID=0000002
@@ -531,6 +532,7 @@ router.get('/changeItemID', async (req, res) => {
 		RundownData.updated = new Date().toISOString();
 
 		RundownData = await spx.appendProjectFile(RundownData, datafile, "from changeItemID");
+		delete RundownData.controllerEntries;
 		global.rundownData = RundownData;
 		await spx.writeFile(datafile, RundownData);
 		logger.verbose('Changed item ID to ' + newI);
@@ -549,10 +551,10 @@ router.get('/changeItemID', async (req, res) => {
 		logger[lvl](msg);
 		return res.status(409).send('ID not changed');
 	}
-});
+}));
 
 
-router.get('/changeItemData', async (req, res) => {
+router.get('/changeItemData', wrapRundown(req => req.query.rundownfile, async (req, res) => {
 	// Added in 1.1.1
 	// ID button in SPX controller uses this API endpoint:
 	// /api/v1/changeItemData?rundownfile=C:/SPX/DATAROOT/PROJECT/data/list.json & ID=1234567890 & key=out & newValue=manual
@@ -576,6 +578,7 @@ router.get('/changeItemData', async (req, res) => {
 
 		RundownData.updated = new Date().toISOString();
 		RundownData = await spx.appendProjectFile(RundownData, datafile, "from changeItemData");
+		delete RundownData.controllerEntries;
 		global.rundownData = RundownData; // push to memory also for next take
 		await spx.writeFile(datafile, RundownData);
 		logger.verbose('ChangeItemData: file: [' + file + '], ID: [' + epoc + '], key: [' + prop + '], value: [' + valu + ']')
@@ -585,7 +588,7 @@ router.get('/changeItemData', async (req, res) => {
 		logger.error('changeItemData error', error);
 		return res.status(409).send('Failed to change ' + prop + ' to ' + valu + '!');
 	}
-});
+}));
 
 
 

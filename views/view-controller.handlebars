@@ -1158,8 +1158,6 @@
                     </div>
                 {{else}}
 
-                {{#if DataFields}}
-
                   <div id="playlistitem{{templateIndex}}"
                     class              = "itemrow row_accent{{uicolor}}"
                     data-spx-epoch     = {{itemID}}
@@ -1602,9 +1600,6 @@
                   </div>
                   </form>
                   </div>
-                  {{else}}
-                  <!-- object had no DataFields, so it as skipped. NULL item? -->
-                  {{/if}}
                 {{/ifValue}}
                 {{/each}}
                 <!-- GC ITEMS ENDED -->

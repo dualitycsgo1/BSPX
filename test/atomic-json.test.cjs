@@ -165,12 +165,20 @@ test('the existing saveItemChanges route saves the selected fields successfully'
   const { target, read } = fixture(t);
   const routes = fs.readFileSync(path.resolve(__dirname, '../routes/routes-application.js'), 'utf8');
   const start = routes.indexOf("router.post('/gc/saveItemChanges'");
-  const end = routes.indexOf('}); // saveItemChanges ended', start) + '}); // saveItemChanges ended'.length;
+  const endMarker = '// saveItemChanges ended';
+  const end = routes.indexOf(endMarker, start) + endMarker.length;
   assert.ok(start >= 0 && end > start);
+  const writeStart = routes.indexOf('async function writeRundown(');
+  const writeEnd = routes.indexOf('function controllerMutationFile(', writeStart);
+  assert.ok(writeStart >= 0 && writeEnd > writeStart);
   let handler;
   const spx = loadSpx();
-  vm.runInNewContext(routes.slice(start, end), { path, console, global: {},
+  const state = {};
+  // Keep testing the real atomic writer through the real save route and its
+  // shared persistence wrapper; the controller suite separately covers races.
+  vm.runInNewContext(routes.slice(writeStart, writeEnd) + routes.slice(start, end), { path, console, global: state,
     logger: { verbose() {}, error() {} }, spxAuth: { CheckLogin() {} },
+    wrapRundown: require('../utils/spx_rundown.js').wrapRundown,
     router: { post(_url, _auth, callback) { handler = callback; } },
     async GetJsonData(file) { return JSON.parse(fs.readFileSync(file, 'utf8')); },
     spx: { ...spx, RemoveFilepathKey: data => data, generateCollapsedHeadline: () => 'Updated' } });
@@ -179,5 +187,6 @@ test('the existing saveItemChanges route saves the selected fields successfully'
     status(code) { status = code; return this; }, send(value) { response = value; } });
   assert.equal(status, 200, String(response));
   assert.equal(read().templates[0].DataFields[0].value, 'New selection');
+  assert.equal(state.rundownData.templates[0].DataFields[0].value, 'New selection');
   assert.equal(response[0], 'Item changes saved');
 });

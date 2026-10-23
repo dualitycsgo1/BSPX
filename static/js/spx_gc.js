@@ -3011,6 +3011,21 @@ function spxInit() {
     spx_system('CHECKCONNECTIONS');
     document.getElementById('itemList').style.opacity=1;
 
+    // Adding to a long rundown should reveal the new row, never play it.
+    var addedID = new URLSearchParams(window.location.search).get('added');
+    if (addedID) {
+        var addedRow = Array.prototype.find.call(document.querySelectorAll('#itemList > .itemrow'), function(row) {
+            return row.getAttribute('data-spx-epoch') === addedID;
+        });
+        if (addedRow) {
+            if (isControllerView() && typeof selectControllerItem === 'function') selectControllerItem(addedRow);
+            addedRow.scrollIntoView({ block: 'nearest' });
+        }
+        var controllerURL = new URL(window.location.href);
+        controllerURL.searchParams.delete('added');
+        window.history.replaceState(null, '', controllerURL.href);
+    }
+
 } // end spxInit
 
 function setProfile(profileName) {

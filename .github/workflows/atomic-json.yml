@@ -1,4 +1,4 @@
-name: Rundown regression tests
+name: BSPX regression tests
 
 on:
   push:

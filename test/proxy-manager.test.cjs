@@ -79,6 +79,68 @@ function fixture(t, options = {}) {
         get deps() { assert.ok(factories.length, 'monitor has started'); return factories.at(-1).deps; } };
 }
 
+test('an external service keeps sole launch ownership after its exact proxy PID disappears', async t => {
+    const owners = new Map();
+    const services = {
+        remember(script, unit) { owners.set(script, unit); },
+        async ownerFor(script) { return owners.get(script) || null; }
+    };
+    const item = fixture(t, { manager: { services } });
+    item.processes.set(44, { pid: 44, scriptPath: path.join(item.root, EAFC), systemd: 'eafc-proxy.service' });
+    item.manager.restore();
+    assert.equal(item.deps.inspect(EAFC).pid, 44);
+    item.processes.delete(44);
+    for (let attempt = 0; attempt < 3; attempt++) {
+        await assert.rejects(item.deps.launch(EAFC), { code: 'SYSTEMD_OWNED' });
+    }
+    assert.equal(item.children.length, 0, 'BSPX never races the existing service restart');
+    item.processes.set(45, { pid: 45, scriptPath: path.join(item.root, EAFC), systemd: 'eafc-proxy.service' });
+    assert.equal(item.deps.inspect(EAFC).pid, 45, 'The service replacement can be adopted');
+    assert.deepEqual(item.signals, []);
+});
+
+test('an installed owner without a running PID blocks competing launch, Stop and port edits', async t => {
+    const services = { remember() {}, async ownerFor() { return 'eafc-proxy.service'; } };
+    const item = fixture(t, { manager: { services } });
+    item.manager.restore();
+    const original = fs.readFileSync(path.join(item.root, EAFC), 'utf8');
+    await assert.rejects(item.deps.launch(EAFC), { code: 'SYSTEMD_OWNED' });
+    await assert.rejects(item.manager.stop(EAFC), /sudo systemctl stop eafc-proxy\.service/);
+    await assert.rejects(item.manager.setPort(EAFC, 6000), /eafc-proxy\.service/);
+    assert.equal(fs.readFileSync(path.join(item.root, EAFC), 'utf8'), original);
+    assert.equal(item.state().wanted.includes(EAFC), true);
+    assert.equal(item.children.length, 0);
+});
+
+test('Stop terminates the current proxy started while ownership lookup was pending', async t => {
+    const lookup = deferred();
+    const services = { remember() {}, ownerFor() { return lookup.promise; } };
+    const item = fixture(t, { manager: { services } });
+    item.manager.restore();
+    const stopping = item.manager.stop(PGL);
+    item.processes.set(81, { pid: 81, scriptPath: path.join(item.root, PGL), systemd: '' });
+    lookup.resolve(null);
+    await stopping;
+    assert.deepEqual(item.signals, [[81, 'SIGTERM']]);
+    assert.equal(item.state().disabled.includes(PGL), true);
+    assert.equal(item.processes.size, 0);
+});
+
+test('port edit refreshes the proxy PID after a pending ownership lookup', async t => {
+    const lookup = deferred();
+    const services = { remember() {}, ownerFor() { return lookup.promise; } };
+    const item = fixture(t, { manager: { services } });
+    item.manager.restore();
+    const changing = item.manager.setPort(PGL, 6300);
+    item.processes.set(82, { pid: 82, scriptPath: path.join(item.root, PGL), systemd: '' });
+    lookup.resolve(null);
+    await changing;
+    assert.deepEqual(item.signals, [[82, 'SIGTERM']]);
+    assert.equal(item.processes.size, 0);
+    assert.match(fs.readFileSync(path.join(item.root, PGL), 'utf8'), /port = 6300/);
+    assert.equal(item.state().wanted.includes(PGL), true);
+});
+
 test('restore starts monitoring all three critical proxies and preserves saved custom helpers', async t => {
     const item = fixture(t, { files: { [CUSTOM]: 5200 }, saved: [CUSTOM, EAFC_ALIAS] });
     item.manager.restore();
@@ -211,14 +273,13 @@ test('watchdog signals only a currently matching proxy PID', async t => {
 });
 
 test('manual Stop waits asynchronously and does not escalate after PID identity changes', async t => {
-    const sleeping = deferred();
-    let enteredSleep = false;
-    const item = fixture(t, { manager: { sleep() { enteredSleep = true; return sleeping.promise; } } });
+    const sleeping = deferred(), enteredSleep = deferred();
+    const item = fixture(t, { manager: { sleep() { enteredSleep.resolve(); return sleeping.promise; } } });
     const manager = createProxyManager({ ...item.managerOptions, kill(pid, kind) { item.signals.push([pid, kind]); } });
     t.after(() => manager.shutdown());
     item.processes.set(55, { pid: 55, scriptPath: path.join(item.root, PGL), systemd: '' });
     const stopping = manager.stop(PGL);
-    assert.equal(enteredSleep, true);
+    await enteredSleep.promise;
     let unrelatedTaskRan = false;
     await new Promise(resolve => setImmediate(() => { unrelatedTaskRan = true; resolve(); }));
     assert.equal(unrelatedTaskRan, true);
@@ -252,15 +313,21 @@ test('port changes for a stopped, disabled helper preserve the manual stop', asy
 });
 
 test('Stop issued during a running port change keeps recovery disabled', async t => {
-    const waiting = [];
-    const item = fixture(t, { manager: { sleep() { const pending = deferred(); waiting.push(pending); return pending.promise; } } });
+    const waiting = [], boundaries = [deferred(), deferred()];
+    const item = fixture(t, { manager: { sleep() {
+        const pending = deferred(); waiting.push(pending);
+        boundaries[waiting.length - 1]?.resolve();
+        return pending.promise;
+    } } });
     const manager = createProxyManager({ ...item.managerOptions, kill(pid, kind) { item.signals.push([pid, kind]); } });
     t.after(() => manager.shutdown());
     manager.restore();
     item.processes.set(65, { pid: 65, scriptPath: path.join(item.root, PGL), systemd: '' });
     const changing = manager.setPort(PGL, 6300);
+    await boundaries[0].promise;
     assert.equal(waiting.length, 1);
     const stopping = manager.stop(PGL);
+    await boundaries[1].promise;
     assert.equal(waiting.length, 2);
     item.processes.delete(65);
     waiting.forEach(pending => pending.resolve());

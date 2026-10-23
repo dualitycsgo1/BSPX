@@ -15,14 +15,14 @@ const { probeHttp } = require('../utils/spx_proxy_health');
 const PGL = 'ASSETS/templates/PGL/proxy.py';
 const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 
-async function until(check, description, timeoutMs = 2500) {
+async function until(check, description, timeoutMs = 5000, diagnostic = () => '') {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const value = await check();
     if (value) return value;
     await delay(15);
   }
-  assert.fail('Timed out: ' + description);
+  assert.fail('Timed out: ' + description + diagnostic());
 }
 
 async function unusedLoopbackPort() {
@@ -43,13 +43,13 @@ function requestCleanExit(port) {
       response.once('end', resolve);
     });
     request.on('error', reject);
-    request.setTimeout(500, () => request.destroy(new Error('Fixture exit request timed out')));
+    request.setTimeout(1000, () => request.destroy(new Error('Fixture exit request timed out')));
   });
 }
 
 test('Linux runtime adopts and restores real Python proxies after crash, clean exit and a local hang', {
   skip: process.platform !== 'linux' ? 'Requires Linux /proc and python3' : false,
-  timeout: 10000
+  timeout: 20000
 }, async t => {
   const temporaryRoot = fs.realpathSync(os.tmpdir());
   const root = fs.mkdtempSync(path.join(temporaryRoot, 'bspx-proxy-runtime-'));
@@ -59,6 +59,15 @@ test('Linux runtime adopts and restores real Python proxies after crash, clean e
   const children = [];
   const managers = [];
   let manager;
+  function logTail() {
+    try {
+      const contents = fs.readFileSync(path.join(root, 'LOG/proxies/ASSETS_templates_PGL_proxy.py.log'), 'utf8');
+      return '\nFixture proxy log tail:\n' + contents.slice(-2000);
+    } catch (_) { return '\nFixture proxy log is not available'; }
+  }
+  function assertGenerations(expected, message) {
+    assert.equal(children.length, expected, message + logTail());
+  }
   t.after(async () => {
     for (const instance of managers) instance.shutdown();
     // Never signal a PID merely because it was once returned by spawn: Linux
@@ -107,14 +116,17 @@ test('Linux runtime adopts and restores real Python proxies after crash, clean e
   function newManager() {
     const instance = createProxyManager({
       root,
-      probeHttp: value => probeHttp(value, { timeoutMs: 60 }),
+      probeHttp: value => probeHttp(value, { timeoutMs: 250 }),
       spawn(command, args, options) {
         const child = spawn(command, args, options);
         children.push(child);
         return child;
       },
       supervisorOptions: {
-        pollMs: 20, healthIntervalMs: 40, startupGraceMs: 150,
+        // Python import/startup and HTTP dispatch contend with the other CI
+        // tests. Allow real scheduling latency; exact small deadline behavior
+        // is already covered separately using the deterministic fake clock.
+        pollMs: 40, healthIntervalMs: 100, startupGraceMs: 1500,
         unhealthyThreshold: 3, restartDelayMs: 40, maxRestartDelayMs: 100, stableMs: 100
       }
     });
@@ -125,14 +137,14 @@ test('Linux runtime adopts and restores real Python proxies after crash, clean e
   async function healthyPid(except = 0) {
     return until(async () => {
       const info = inspector.find(script);
-      return info && info.pid !== except && await probeHttp(port, { timeoutMs: 80 }) ? info.pid : 0;
-    }, 'a responsive fixture Python process');
+      return info && info.pid !== except && await probeHttp(port, { timeoutMs: 250 }) ? info.pid : 0;
+    }, 'a responsive fixture Python process', 5000, logTail);
   }
 
   manager = newManager();
   await manager.start(PGL);
   const originalPid = await healthyPid();
-  assert.equal(children.length, 1);
+  assertGenerations(1, 'Initial startup must not prematurely replace a healthy Python process');
   assert.equal(manager.list()[0].port, port);
 
   // Simulate BSPX starting again while its helper is already alive.
@@ -140,32 +152,32 @@ test('Linux runtime adopts and restores real Python proxies after crash, clean e
   manager = newManager();
   await manager.start(PGL);
   assert.equal(await healthyPid(), originalPid);
-  assert.equal(children.length, 1, 'Existing proxy was adopted without a duplicate');
+  assertGenerations(1, 'Existing proxy was adopted without a duplicate');
 
   assert.equal(inspector.matches(originalPid, script), true);
   process.kill(originalPid, 'SIGKILL');
   const afterCrash = await healthyPid(originalPid);
   assert.notEqual(afterCrash, originalPid);
-  assert.equal(children.length, 2);
+  assertGenerations(2, 'One replacement starts after a crash');
 
   await requestCleanExit(port);
   const afterCleanExit = await healthyPid(afterCrash);
   assert.notEqual(afterCleanExit, afterCrash);
-  assert.equal(children.length, 3);
+  assertGenerations(3, 'One replacement starts after a normal exit');
   assert.equal(children[1].exitCode, 0, 'A normal exit is recovered too');
 
   fs.writeFileSync(hang, 'hang only this test fixture\n');
   const replacementPid = await until(() => {
     const info = inspector.find(script);
     return info && info.pid !== afterCleanExit ? info.pid : 0;
-  }, 'watchdog replacing the unresponsive local HTTP process');
+  }, 'watchdog replacing the unresponsive local HTTP process', 5000, logTail);
   fs.unlinkSync(hang);
   assert.equal(await healthyPid(afterCleanExit), replacementPid);
   assert.equal(children[2].signalCode, 'SIGKILL', 'Only the unresponsive proxy was killed');
-  assert.equal(children.length, 4);
+  assertGenerations(4, 'One replacement starts after the local HTTP hang');
 
   await manager.stop(PGL);
-  await until(() => !inspector.find(script), 'manual stop to remove the fixture proxy');
+  await until(() => !inspector.find(script), 'manual stop to remove the fixture proxy', 5000, logTail);
   const count = children.length;
   await delay(220);
   assert.equal(children.length, count, 'Stop disables recovery before terminating the process');

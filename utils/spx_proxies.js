@@ -7,6 +7,7 @@ const { spawn } = require('child_process');
 const { createProcessInspector } = require('./spx_proxy_process');
 const { createSupervisor } = require('./spx_proxy_supervisor');
 const { probeHttp, isPortBusy } = require('./spx_proxy_health');
+const { createServiceOwnership } = require('./spx_proxy_services');
 
 const CRITICAL = [
     ['ASSETS/templates/eafc/integration/proxy.py', 'ASSETS/templates/eafc/proxy.py'],
@@ -21,6 +22,7 @@ function createProxyManager(options = {}) {
     const spawnChild = options.spawn || spawn;
     const signal = options.kill || ((pid, kind) => process.kill(pid, kind));
     const inspector = options.inspector || createProcessInspector();
+    const services = options.services || createServiceOwnership();
     const health = options.probeHttp || probeHttp;
     const busy = options.isPortBusy || isPortBusy;
     const sleep = options.sleep || (ms => new Promise(resolve => setTimeout(resolve, ms)));
@@ -120,6 +122,7 @@ function createProxyManager(options = {}) {
         const found = inspector.find(script, aliases(id));
         const info = found || (child && child.pid && child.exitCode == null && child.signalCode == null ?
             { pid: child.pid, scriptPath: script, systemd: '' } : { pid: 0, scriptPath: script, systemd: '' });
+        if (externalService(id, info)) services.remember(script, info.systemd, aliases(id));
         return { ...info, port: portOf(info.scriptPath || script) };
     }
     function externalService(id, info) {
@@ -132,6 +135,13 @@ function createProxyManager(options = {}) {
         id = canonical(id);
         const script = resolveAllowed(id), first = inspect(id);
         if (first.pid) return null;
+        const service = await services.ownerFor(script, aliases(id));
+        if (service) {
+            log(id, 'Waiting for existing systemd owner: ' + service);
+            const error = new Error('Proxyen genstartes af ' + service);
+            error.code = 'SYSTEMD_OWNED';
+            throw error;
+        }
         if (first.port && await busy(first.port)) throw new Error('Proxy-porten er optaget; ingen anden proces bliver stoppet');
         if (!desired().includes(id)) throw new Error('Proxy-start er annulleret');
         if (inspect(id).pid) return null;
@@ -187,13 +197,18 @@ function createProxyManager(options = {}) {
     async function stop(id) {
         assertMain();
         id = relative(resolveAllowed(id));
-        const info = inspect(id);
-        if (externalService(id, info)) throw new Error('Proxyen styres af ' + info.systemd + '. Stop den via sudo systemctl stop ' + info.systemd);
+        let info = inspect(id);
+        const service = externalService(id, info) ? info.systemd : await services.ownerFor(resolveAllowed(id), aliases(id));
+        info = inspect(id); // A proxy may have started or changed during the lookup.
+        const currentService = service || (externalService(id, info) ? info.systemd : '');
+        if (currentService) throw new Error('Proxyen styres af ' + currentService + '. Stop den via sudo systemctl stop ' + currentService);
         const state = readState();
         state.wanted = state.wanted.filter(value => value !== id);
         if (!state.disabled.includes(id)) state.disabled.push(id);
         writeState(state); // Disable recovery before signalling the child.
         supervisor?.forget(id);
+        info = inspect(id);
+        if (externalService(id, info)) throw new Error('Proxyen styres af ' + info.systemd + '. Stop den via sudo systemctl stop ' + info.systemd);
         if (info.pid) await terminate(id, info.pid, false);
         return path.basename(id) + ' stoppet; automatisk opstart er slået fra indtil Start';
     }
@@ -215,8 +230,11 @@ function createProxyManager(options = {}) {
         if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('Port skal være mellem 1024 og 65535');
         const script = resolveAllowed(id);
         id = relative(script);
-        const info = inspect(id);
-        if (externalService(id, info)) throw new Error('Porten for ' + info.systemd + ' ændres i den tilhørende tjeneste');
+        let info = inspect(id);
+        const service = externalService(id, info) ? info.systemd : await services.ownerFor(script, aliases(id));
+        info = inspect(id);
+        const currentService = service || (externalService(id, info) ? info.systemd : '');
+        if (currentService) throw new Error('Porten for ' + currentService + ' ændres i den tilhørende tjeneste');
         const before = io.readFileSync(script, 'utf8'), next = rewritePort(before, port);
         if (next === before) return path.basename(id) + ' bruger allerede port ' + port;
         paused.add(id); supervisor?.forget(id);

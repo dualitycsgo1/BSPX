@@ -23,8 +23,10 @@ sudo bash deploy/enable-proxy-supervision.sh &&
 sudo systemctl restart bspx
 ```
 
-The installer adds a systemd drop-in and enables the existing BSPX service at
-boot. It preserves the existing service command, account and configuration. It
+The installer adds systemd drop-ins and enables the existing BSPX service and
+any installed sidecar that owns an exact critical proxy script. Those sidecars
+also become BSPX startup dependencies, with automatic restart after both clean
+and unexpected exits. It preserves every existing service command and account. It
 does not restart anything until the final command is executed. BSPX itself is
 then restarted after unexpected or clean process exit, with a three-second
 delay; an explicit `systemctl stop bspx` remains an intentional stop.
@@ -43,7 +45,9 @@ delay; an explicit `systemctl stop bspx` remains an intentional stop.
   An upstream outage does not cause restart loops in a responsive local proxy.
 - An existing exact script process is adopted. An unrelated occupied port is
   reported and retried; its listener is never terminated. Existing systemd
-  sidecars may supply their own replacement process, which BSPX adopts.
+  sidecars retain sole launch ownership even while their process is absent;
+  BSPX adopts their replacement and never races them to bind the same port.
+  A transient systemd query failure does not release confirmed ownership.
 - Each proxy has independent state. A slow health request does not block the
   controller event loop or recovery of another proxy.
 

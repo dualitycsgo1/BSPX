@@ -87,6 +87,22 @@ function usedPorts() {
     return ports;
 }
 
+// Read configuration only; data gateways must not inspect or start instances.
+function configuredPorts() {
+    if (!fs.existsSync(dir())) return [];
+    const values = fs.readdirSync(dir())
+        .filter(name => name.endsWith('.json') && name !== 'state.json')
+        .map(name => name.slice(0, -5))
+        .filter(id => /^[a-z0-9][a-z0-9-]{0,30}$/.test(id))
+        .flatMap(id => {
+            try {
+                const port = Number(readConfig(id).general.port);
+                return Number.isInteger(port) && port > 0 && port <= 65535 ? [port] : [];
+            } catch (_) { return []; }
+        });
+    return [...new Set(values)].sort((a, b) => a - b);
+}
+
 function nextPort() {
     const used = usedPorts();
     for (let port = 8081; port <= 8099; port++) {
@@ -187,6 +203,7 @@ function restore() {
 
 module.exports = {
     list: list,
+    configuredPorts: configuredPorts,
     create: create,
     start: start,
     stop: stop,

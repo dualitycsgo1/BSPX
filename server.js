@@ -72,6 +72,24 @@ if (!configfileref) {
 const spx = require('./utils/spx_server_functions.js');
 const logger = require('./utils/logger.js');
 const layerNames = require('./utils/spx_layernames.js');
+const proxies = require('./utils/spx_proxies.js');
+const instances = require('./utils/spx_instances.js');
+const { createProxyGateway } = require('./utils/spx_proxy_gateway.js');
+const { createTemplateProxyMiddleware } = require('./utils/spx_proxy_templates.js');
+
+// Every process exposes the same local data services through its own origin.
+// Only the main process owns their lifecycle; no per-instance Python copies.
+app.use('/bspx-proxy', createProxyGateway({
+  getPorts: () => {
+    const reserved = new Set([Number(config.general.port || 5656),
+      Number(config.general.managerPort || 8080), ...instances.configuredPorts()]);
+    return proxies.sharedPorts().filter(value => !reserved.has(value));
+  },
+  clientSource: fs.readFileSync(path.join(__dirname, 'static/js/spx_proxy_client.js'), 'utf8')
+}));
+app.use('/templates', createTemplateProxyMiddleware({
+  root: spx.getStartUpFolder()
+}));
 
 // STATICS
 app.use(express.static(path.join(__dirname,('static'))))

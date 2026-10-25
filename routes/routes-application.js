@@ -40,6 +40,7 @@ const { timeStamp } = require("console");
 const http = require('http');
 const axios = require('axios');
 const proxies = require('../utils/spx_proxies.js');
+const { localProxyTarget, serverHosts } = require('../utils/spx_proxy_gateway.js');
 const instances = require('../utils/spx_instances.js');
 const layerNames = require('../utils/spx_layernames.js');
 
@@ -2055,7 +2056,9 @@ router.get('/gc/fetchItems', spxAuth.CheckLogin, async (req, res) => {
 		headers: { Accept: 'application/json' }
 	});
 	try {
-		const target = new URL(String(req.query.url || ''));
+		const target = localProxyTarget(String(req.query.url || ''), {
+			ports: proxies.sharedPorts(), hosts: serverHosts(req)
+		});
 		if (target.protocol !== 'http:' && target.protocol !== 'https:') {
 			res.status(400).send('Kun http(s)');
 			return;

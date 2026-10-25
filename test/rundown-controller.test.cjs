@@ -87,6 +87,7 @@ function application({ count = 3, profileCount = 2 } = {}) {
     '../utils/spx_auth.js': { CheckLogin() {}, Logout() {} }, jsdom: { JSDOM: class {} },
     cors: () => () => {}, console: { timeStamp() {} }, http: {}, axios: {},
     '../utils/spx_proxies.js': {}, '../utils/spx_instances.js': {}, '../utils/spx_layernames.js': {},
+    '../utils/spx_proxy_gateway.js': require('../utils/spx_proxy_gateway.js'),
     '../utils/spx_rundown.js': require('../utils/spx_rundown.js')
   };
   const context = vm.createContext({

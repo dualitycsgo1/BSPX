@@ -3,6 +3,26 @@
 De tre produktionsproxyer startes og overvåges nu automatisk sammen med
 BSPX-hovedserveren. Se [automatisk genstart og aktivering](proxy-supervision.md).
 
+## Fælles adgang fra alle instances
+
+Alle BSPX-instances har automatisk adgang til de samme proxyer gennem deres
+egen adresse. Det gælder både hovedserveren og nye instances med egne porte,
+også når controlleren eller grafikkilden åbnes over Tailscale.
+
+`/bspx-proxy/<proxyport>/<rute>` videresender kun læsekald til en registreret
+lokal proxy. Der startes én fælles proxyproces, ikke én pr. instance, og der
+tilføjes ingen ny datacache eller ekstra automatiske API-kald. En stoppet
+proxy skal fortsat startes på hovedserverens **Proxyer**-side.
+
+Controlleren og HTML-skabeloner får automatisk en lille adresseoversætter.
+Eksisterende `fetch`-/XHR-læsninger til serverens lokale proxyadresser bruger
+den aktuelle BSPX-adresse. Grafiklayout, valgte værdier og rundown-ID'er
+ændres ikke. Direkte proxyporte virker fortsat for eksisterende klienter.
+
+Efter aktivering af ny core-kode genindlæses controller og browserkilder én
+gang; genindlæs en grafikkilde, mens den er af skærmen. Nye instances bruger
+samme funktion uden særlige portlister eller individuel opsætning.
+
 En proxy er et Python-program, som BSPX starter fra **Proxyer**. Controllerens dropdowns henter deres valg gennem den. Grafikken i vMix kan kalde den samme proxy. Byg filen og svaret som beskrevet her, så begge dele virker uden særtilfælde.
 
 ## 1. Filen

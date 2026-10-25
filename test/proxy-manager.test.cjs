@@ -79,6 +79,19 @@ function fixture(t, options = {}) {
         get deps() { assert.ok(factories.length, 'monitor has started'); return factories.at(-1).deps; } };
 }
 
+test('managed instances discover shared ports, including new proxies, without starting or owning them', t => {
+    const item = fixture(t, { manager: { env: { SPX_MANAGED: '1' } } });
+    assert.deepEqual(item.manager.sharedPorts(), [5101, 5102, 5103]);
+    item.write(CUSTOM, "HOST = '0.0.0.0'\nport = 5123\n");
+    assert.deepEqual(item.manager.sharedPorts(), [5101, 5102, 5103, 5123]);
+    item.write(CUSTOM, "HOST = '0.0.0.0'\nport = 5124\n");
+    assert.deepEqual(item.manager.sharedPorts(), [5101, 5102, 5103, 5124]);
+    assert.equal(fs.existsSync(item.statePath), false);
+    assert.deepEqual(item.children, []);
+    assert.deepEqual(item.signals, []);
+    assert.deepEqual(item.factories, []);
+});
+
 test('an external service keeps sole launch ownership after its exact proxy PID disappears', async t => {
     const owners = new Map();
     const services = {

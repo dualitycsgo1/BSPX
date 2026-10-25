@@ -271,6 +271,19 @@ function createProxyManager(options = {}) {
             } catch (_) { return []; }
         });
     }
+    // Data access is shared by every instance. Discover ports without process
+    // ownership checks: a managed instance may read, but never launch a copy.
+    function sharedPorts() {
+        const found = [];
+        roots.forEach(base => walk(base, found));
+        return [...new Set(found.flatMap(file => {
+            try {
+                const script = resolveAllowed(relative(file));
+                const port = portOf(script);
+                return port ? [port] : [];
+            } catch (_) { return []; }
+        }))].sort((a, b) => a - b);
+    }
     function restore() {
         if (env.SPX_MANAGED === '1') return;
         const state = readState();
@@ -285,6 +298,6 @@ function createProxyManager(options = {}) {
         monitor().start().catch(() => {});
     }
     function shutdown() { supervisor?.shutdown(); supervisor = null; }
-    return { list, start, stop, setPort, restore, shutdown };
+    return { list, sharedPorts, start, stop, setPort, restore, shutdown };
 }
 module.exports = { ...createProxyManager(), createProxyManager };

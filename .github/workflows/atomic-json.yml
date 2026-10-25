@@ -3,6 +3,8 @@ name: BSPX regression tests
 on:
   push:
     paths:
+      - 'server.js'
+      - 'static/js/spx_proxy_client.js'
       - 'utils/spx_atomic_json.js'
       - 'utils/spx_server_functions.js'
       - 'utils/spx_rundown.js'
@@ -26,6 +28,8 @@ on:
       - '.github/workflows/atomic-json.yml'
   pull_request:
     paths:
+      - 'server.js'
+      - 'static/js/spx_proxy_client.js'
       - 'utils/spx_atomic_json.js'
       - 'utils/spx_server_functions.js'
       - 'utils/spx_rundown.js'
